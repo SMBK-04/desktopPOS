@@ -1,0 +1,19 @@
+# .NET build outputs
+[Bb]in/
+[Oo]bj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Database & SQLite local storage
+*.db
+*.db-journal
+*.sqlite
+
+# Logs & temp files
+*.log
+.vs/
+.idea/
+
+# Published output binaries (large files)
+PublishOutput/

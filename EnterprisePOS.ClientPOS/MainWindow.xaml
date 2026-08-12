@@ -1,0 +1,342 @@
+<Window x:Class="EnterprisePOS.ClientPOS.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource TextPrimary}"
+        Background="{DynamicResource BgPrimary}"
+        FontFamily="Segoe UI"
+        Title="Point of Sale" Height="800" Width="1200" WindowState="Maximized">
+    <Window.Resources>
+        <!-- Category Pill RadioButton Style -->
+        <Style x:Key="CategoryPillStyle" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border" Background="Transparent" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="20" Padding="20,8" Margin="0,0,10,0" Cursor="Hand">
+                            <TextBlock Text="{TemplateBinding Content}" Foreground="{DynamicResource TextSecondary}" FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource BgHover}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource AccentSoft}" />
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentColor}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CartQtyBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource BgHover}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6" Cursor="Hand">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="NavButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="Padding" Value="12,12" />
+            <Setter Property="Margin" Value="10,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{DynamicResource BgHover}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- SIDEBAR -->
+        <Border Grid.Column="0" Background="#0f172a" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="20,20,0,30">
+                    <materialDesign:PackIcon Kind="Storefront" Width="24" Height="24" Foreground="{DynamicResource AccentColor}"/>
+                    <TextBlock Text="EnterprisePOS" FontWeight="Bold" FontSize="18" Foreground="White" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <TextBlock Text="MAIN" Foreground="{DynamicResource TextMuted}" FontSize="11" FontWeight="SemiBold" Margin="20,0,0,10"/>
+                <Button x:Name="btnNavDashboard" Content="Dashboard" Style="{StaticResource NavButtonStyle}" Click="BtnNavDashboard_Click"/>
+                <Button x:Name="btnNavPOS" Content="Point of Sale" Style="{StaticResource NavButtonStyle}" Foreground="{DynamicResource AccentColor}" Click="BtnNavPOS_Click"/>
+                
+                <TextBlock Text="MANAGEMENT" Foreground="{DynamicResource TextMuted}" FontSize="11" FontWeight="SemiBold" Margin="20,20,0,10"/>
+                <Button x:Name="btnNavProducts" Content="Products" Style="{StaticResource NavButtonStyle}" Click="BtnNavProducts_Click"/>
+                <Button x:Name="btnNavDeals" Content="Deals" Style="{StaticResource NavButtonStyle}" Click="BtnNavDeals_Click"/>
+                <Button x:Name="btnNavSalesHistory" Content="Sales History" Style="{StaticResource NavButtonStyle}" Click="BtnNavSalesHistory_Click"/>
+                
+                <TextBlock Text="ADMINISTRATION" x:Name="lblNavAdmin" Foreground="{DynamicResource TextMuted}" FontSize="11" FontWeight="SemiBold" Margin="20,20,0,10"/>
+                <Button x:Name="btnNavUsers" Content="Users &amp; Roles" Style="{StaticResource NavButtonStyle}" Click="BtnNavUsers_Click"/>
+                <Button x:Name="btnNavSettings" Content="Printer Settings" Style="{StaticResource NavButtonStyle}" Click="BtnNavSettings_Click"/>
+                
+                <Button x:Name="btnSignOut" Content="Sign Out" Style="{StaticResource NavButtonStyle}" Foreground="{DynamicResource DangerColor}" Margin="10,40,10,0" Click="BtnSignOut_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- MAIN APP AREA -->
+        <Grid Grid.Column="1">
+            
+            <ContentControl x:Name="AdminContent" Visibility="Collapsed" />
+            
+            <Grid x:Name="POSPanel">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="64"/> <!-- Top Bar -->
+                    <RowDefinition Height="*"/> <!-- Body -->
+                </Grid.RowDefinitions>
+
+        <!-- ═══ TOP BAR ═══ -->
+        <Border Grid.Row="0" Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+            <Grid Margin="20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="380" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                    <!-- Placeholder Back Button -->
+                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}" Width="36" Height="36" Background="{DynamicResource BgHover}" Foreground="{DynamicResource TextSecondary}">
+                        <materialDesign:PackIcon Kind="ArrowLeft" />
+                    </Button>
+                    <TextBlock Text="Point of Sale" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" Margin="16,0,0,0" />
+                </StackPanel>
+
+                <!-- Search -->
+                <Border Grid.Column="1" Background="{DynamicResource BgHover}" CornerRadius="8" Height="40" Margin="30,0" Padding="12,0" VerticalAlignment="Center">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <materialDesign:PackIcon Kind="Magnify" Foreground="{DynamicResource TextMuted}" VerticalAlignment="Center" />
+                        <TextBox x:Name="txtSearch" Grid.Column="1" Margin="8,0,0,0" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" TextChanged="TxtSearch_TextChanged" materialDesign:HintAssist.Hint="Search products..." />
+                    </Grid>
+                </Border>
+
+                <!-- Actions -->
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <ComboBox Width="140" SelectedIndex="0" Foreground="{DynamicResource TextPrimary}" Margin="0,0,16,0">
+                        <ComboBoxItem Content="🥡 Takeaway" />
+                        <ComboBoxItem Content="🍽️ Dine-In" />
+                        <ComboBoxItem Content="🛵 Delivery" />
+                    </ComboBox>
+                    
+                    <Button Content="Hold" Margin="0,0,8,0" Background="{DynamicResource WarningColor}" Foreground="White" BorderThickness="0" Height="40" />
+                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}" Width="40" Height="40" Background="{DynamicResource BgHover}" Foreground="{DynamicResource TextSecondary}" Margin="0,0,8,0">
+                        <materialDesign:PackIcon Kind="ClockOutline" />
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignIconForegroundButton}" Width="40" Height="40" Background="{DynamicResource BgHover}" Foreground="{DynamicResource TextSecondary}" Margin="0,0,8,0">
+                        <materialDesign:PackIcon Kind="Bell" />
+                    </Button>
+                    
+                    <Button x:Name="btnStartDay" Content="Start Day" Margin="0,0,8,0" Background="{DynamicResource SuccessColor}" Foreground="White" BorderThickness="0" Height="40" Click="BtnStartDay_Click" />
+                    <Button x:Name="btnEndDay" Content="End Day" Margin="0,0,8,0" Background="{DynamicResource DangerColor}" Foreground="White" BorderThickness="0" Height="40" Click="BtnEndDay_Click" Visibility="Collapsed" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border x:Name="LicenseWarningBanner" Grid.Row="1" Background="{DynamicResource DangerColor}" VerticalAlignment="Bottom" Visibility="Collapsed" Panel.ZIndex="100">
+            <TextBlock Text="⚠️ SUBSCRIPTION PAST DUE. PLEASE CONTACT SUPPORT." Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" Padding="10"/>
+        </Border>
+
+        <Border x:Name="ShiftOverlay" Grid.Row="1" Background="#D80f172a" Panel.ZIndex="1000">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <TextBlock Text="Shift is Closed" FontSize="32" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                <TextBlock Text="Please click 'Start Day' on the top bar to open the register." FontSize="18" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ═══ MAIN BODY ═══ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" /> <!-- Products -->
+                <ColumnDefinition Width="390" /> <!-- Cart -->
+            </Grid.ColumnDefinitions>
+
+            <!-- PRODUCTS PANEL -->
+            <Grid Grid.Column="0" Margin="16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                
+                <!-- Category Pills -->
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal">
+                        <!-- Deals Special Pill -->
+                        <RadioButton x:Name="rbDeals" Content="🏷️ Deals" Style="{StaticResource CategoryPillStyle}" GroupName="Categories" Checked="DealsCategory_Checked" Margin="0,0,10,0"/>
+                        <ItemsControl x:Name="icCategories">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <RadioButton Content="{Binding}" Style="{StaticResource CategoryPillStyle}" GroupName="Categories" Checked="Category_Checked" Tag="{Binding}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Product Grid -->
+                <ScrollViewer Grid.Row="1" x:Name="svProducts" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="icProducts">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="12" Margin="8" Width="160" Height="220" Cursor="Hand" MouseLeftButtonUp="Product_Click" Tag="{Binding Id}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource BgHover}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="120" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+                                        <!-- Emoji Header -->
+                                        <Border Grid.Row="0" Background="{DynamicResource BgHover}" CornerRadius="12,12,0,0">
+                                            <TextBlock Text="{Binding Emoji}" FontSize="60" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <!-- Details -->
+                                        <StackPanel Grid.Row="1" Margin="12">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap" />
+                                            <TextBlock Text="{Binding Price, StringFormat=Rs {0:N2}}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource AccentColor}" Margin="0,8,0,0" />
+                                            <TextBlock Text="Out of Stock" Foreground="{DynamicResource DangerColor}" FontSize="12" FontWeight="SemiBold" Visibility="{Binding IsOutOfStock, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+            </Grid>
+
+            <!-- CART PANEL -->
+            <Border Grid.Column="1" Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1,0,0,0" Padding="20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Cart Header -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Order Cart" FontSize="18" FontWeight="Bold" />
+                            <TextBlock x:Name="txtCartCount" Text="0 items" FontSize="12" Foreground="{DynamicResource TextMuted}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="Clear" Style="{StaticResource MaterialDesignFlatButton}" Foreground="{DynamicResource DangerColor}" Click="BtnClearCart_Click" />
+                    </Grid>
+
+                    <!-- Cart Items -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="icCart">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <TextBlock Grid.Column="0" Text="{Binding ProductName}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,8,0" />
+                                        
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,16,0">
+                                            <Button Content="-" Style="{StaticResource CartQtyBtnStyle}" Click="BtnMinus_Click" Tag="{Binding ProductId}" />
+                                            <TextBlock Text="{Binding Quantity}" Width="30" TextAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" />
+                                            <Button Content="+" Style="{StaticResource CartQtyBtnStyle}" Click="BtnPlus_Click" Tag="{Binding ProductId}" />
+                                        </StackPanel>
+                                        
+                                        <TextBlock Grid.Column="2" Text="{Binding SubTotal, StringFormat=Rs {0:N2}}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,12,0" />
+                                        
+                                        <Button Grid.Column="3" Style="{StaticResource MaterialDesignIconForegroundButton}" Foreground="{DynamicResource DangerColor}" Width="24" Height="24" Click="BtnRemoveItem_Click" Tag="{Binding ProductId}">
+                                            <materialDesign:PackIcon Kind="CloseCircleOutline" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Empty Cart Message -->
+                    <StackPanel x:Name="pnlEmptyCart" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="CartOutline" Width="48" Height="48" Foreground="{DynamicResource BorderColor}" HorizontalAlignment="Center" Margin="0,0,0,16" />
+                        <TextBlock Text="Cart is empty" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Totals & Checkout -->
+                    <StackPanel Grid.Row="2" Margin="0,16,0,0">
+                        <Grid Margin="0,0,0,16">
+                            <TextBlock Text="TOTAL" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextSecondary}" />
+                            <TextBlock x:Name="txtGrandTotal" Text="Rs 0.00" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" HorizontalAlignment="Right" />
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="CASH" Height="50" FontSize="16" FontWeight="Bold" Background="{DynamicResource AccentColor}" BorderThickness="0" Foreground="White" Click="BtnCheckoutCash_Click" />
+                            <Button Grid.Column="2" Content="ONLINE PAYMENT" Height="50" FontSize="14" FontWeight="Bold" Background="Transparent" BorderBrush="{DynamicResource AccentColor}" BorderThickness="1" Foreground="{DynamicResource AccentColor}" Click="BtnCheckoutOnline_Click" />
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+            </Border>
+</Grid>
+</Grid>
+</Grid>
+</Grid>
+</Window>

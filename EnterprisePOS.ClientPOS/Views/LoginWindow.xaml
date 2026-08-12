@@ -1,0 +1,24 @@
+<Window x:Class="EnterprisePOS.ClientPOS.Views.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Background="{DynamicResource BgPrimary}"
+        TextElement.Foreground="{DynamicResource TextPrimary}"
+        Title="EnterprisePOS Login" Height="420" Width="400" WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="NoResize" Loaded="Window_Loaded">
+    <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="12" Margin="10" Background="{DynamicResource BgCard}">
+        <StackPanel VerticalAlignment="Center" Margin="30">
+            <materialDesign:PackIcon Kind="Storefront" Width="64" Height="64" HorizontalAlignment="Center" Foreground="{DynamicResource AccentColor}" Margin="0,0,0,20"/>
+            <TextBlock Text="Welcome Back" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+            <TextBlock Text="Sign in to your point of sale" FontSize="14" Foreground="{DynamicResource TextMuted}" HorizontalAlignment="Center" Margin="0,0,0,25"/>
+            
+            <TextBox x:Name="txtEmail" materialDesign:HintAssist.Hint="Email Address" Style="{StaticResource MaterialDesignFloatingHintTextBox}" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,20" FontSize="16"/>
+            <PasswordBox x:Name="txtPassword" materialDesign:HintAssist.Hint="Password" Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,10" FontSize="16" KeyDown="TxtPassword_KeyDown" />
+            
+            <CheckBox x:Name="chkRememberMe" Content="Remember Me" Foreground="{DynamicResource TextSecondary}" Margin="0,0,0,20"/>
+            
+            <TextBlock x:Name="txtError" Foreground="{DynamicResource DangerColor}" HorizontalAlignment="Center" Margin="0,0,0,10" FontWeight="SemiBold" TextWrapping="Wrap" />
+            
+            <Button Content="SIGN IN" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0" Height="45" FontSize="16" FontWeight="Bold" Margin="0,10,0,0" Click="BtnLogin_Click" />
+        </StackPanel>
+    </Border>
+</Window>

@@ -1,0 +1,6 @@
+@EnterprisePOS.ServerAPI_HostAddress = http://localhost:5079
+
+GET {{EnterprisePOS.ServerAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

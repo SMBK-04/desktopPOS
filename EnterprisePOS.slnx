@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EnterprisePOS.ClientPOS/EnterprisePOS.ClientPOS.csproj" />
+  <Project Path="EnterprisePOS.ServerAPI/EnterprisePOS.ServerAPI.csproj" />
+  <Project Path="EnterprisePOS.Shared/EnterprisePOS.Shared.csproj" />
+  <Project Path="EnterprisePOS.SuperAdmin/EnterprisePOS.SuperAdmin.csproj" />
+</Solution>

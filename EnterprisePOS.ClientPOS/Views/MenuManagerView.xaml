@@ -1,0 +1,180 @@
+<UserControl x:Class="EnterprisePOS.ClientPOS.Views.MenuManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="{DynamicResource BgPrimary}"
+             TextElement.Foreground="{DynamicResource TextPrimary}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Page Header -->
+        <Border Grid.Row="0" Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Padding="28,20">
+            <StackPanel>
+                <TextBlock Text="Products &amp; Categories" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}"/>
+                <TextBlock Text="Manage your menu categories and products" FontSize="13" Foreground="{DynamicResource TextMuted}" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: Categories Panel -->
+            <Border Grid.Column="0" Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+                <Grid Margin="20">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Categories" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+
+                    <!-- Add Category Form -->
+                    <Border Grid.Row="1" Background="{DynamicResource BgHover}" CornerRadius="10" Padding="14" Margin="0,0,0,16">
+                        <StackPanel>
+                            <TextBlock Text="New Category" FontSize="12" Foreground="{DynamicResource TextMuted}" Margin="0,0,0,8"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Background="{DynamicResource BgPrimary}" CornerRadius="6" Padding="10,6" Margin="0,0,8,0">
+                                    <TextBox x:Name="txtCategoryName" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" materialDesign:HintAssist.Hint="Category name..."/>
+                                </Border>
+                                <Button Grid.Column="1" Content="Add" Click="BtnAddCategory_Click" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0" Height="36" Padding="14,0"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Category List -->
+                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                        <ListBox x:Name="lstCategories" DisplayMemberPath="Name" SelectionChanged="LstCategories_SelectionChanged"
+                                 Background="Transparent" BorderThickness="0" Foreground="{DynamicResource TextPrimary}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="12,10"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="Bd" Background="Transparent" CornerRadius="8" Padding="{TemplateBinding Padding}" Margin="0,2">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"/>
+                                                        <Button Grid.Column="1" Content="✕" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource DangerColor}" FontSize="12" Padding="4" Click="BtnDeleteCategory_Click" Tag="{Binding}" Visibility="Hidden" x:Name="btnDel"/>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BgHover}"/>
+                                                        <Setter TargetName="btnDel" Property="Visibility" Value="Visible"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSoft}"/>
+                                                        <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+                                                        <Setter TargetName="Bd" Property="BorderThickness" Value="1"/>
+                                                        <Setter TargetName="btnDel" Property="Visibility" Value="Visible"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- RIGHT: Products Panel -->
+            <Grid Grid.Column="1" Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Products Header + Form -->
+                <TextBlock Grid.Row="0" x:Name="txtProductsHeader" Text="Select a category" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimary}" Margin="0,0,0,16"/>
+
+                <!-- Add/Edit Product Form -->
+                <Border Grid.Row="1" Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="12" Padding="20" Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{DynamicResource BgHover}" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
+                            <TextBox x:Name="txtProductName" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextPrimary}" materialDesign:HintAssist.Hint="Product name..."/>
+                        </Border>
+                        <Border Grid.Column="1" Background="{DynamicResource BgHover}" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
+                            <TextBox x:Name="txtProductPrice" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextPrimary}" materialDesign:HintAssist.Hint="Selling price"/>
+                        </Border>
+                        <Border Grid.Column="2" Background="{DynamicResource BgHover}" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
+                            <TextBox x:Name="txtProductCost" BorderThickness="0" Background="Transparent" Foreground="{DynamicResource TextPrimary}" materialDesign:HintAssist.Hint="Cost price"/>
+                        </Border>
+                        <Button Grid.Column="3" x:Name="btnAddProduct" Content="Add Product" Click="BtnAddProduct_Click" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0" Height="40" Padding="16,0" Margin="0,0,8,0"/>
+                        <Button Grid.Column="4" x:Name="btnCancelEdit" Content="Cancel" Click="BtnCancelEdit_Click" Background="{DynamicResource BgHover}" Foreground="{DynamicResource TextSecondary}" BorderThickness="0" Height="40" Padding="12,0" Visibility="Collapsed"/>
+                    </Grid>
+                </Border>
+
+                <!-- Product Card Grid -->
+                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="icProductCards">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource BgCard}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="12" Margin="0,0,12,12" Width="170">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="100"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <!-- Emoji Header -->
+                                        <Border Grid.Row="0" Background="{DynamicResource BgHover}" CornerRadius="12,12,0,0">
+                                            <TextBlock Text="🍔" FontSize="48" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <!-- Details -->
+                                        <Grid Grid.Row="1" Margin="12">
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimary}" TextWrapping="Wrap"/>
+                                            <TextBlock Grid.Row="1" Text="{Binding Price, StringFormat=Rs {0:N2}}" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource AccentColor}" Margin="0,4,0,4"/>
+                                            <CheckBox Grid.Row="2" Content="Out of Stock" IsChecked="{Binding IsOutOfStock, UpdateSourceTrigger=PropertyChanged}" Foreground="{DynamicResource TextMuted}" FontSize="11" Checked="CheckBox_Checked" Unchecked="CheckBox_Checked" Margin="0,0,0,8"/>
+                                            <StackPanel Grid.Row="3" Orientation="Horizontal">
+                                                <Button Content="Edit" Click="BtnEditProduct_Click" Background="Transparent" BorderBrush="{DynamicResource AccentColor}" BorderThickness="1" Foreground="{DynamicResource AccentColor}" FontSize="11" Height="28" Padding="10,0" Margin="0,0,6,0"/>
+                                                <Button Content="Delete" Click="BtnDeleteProduct_Click" Background="Transparent" BorderBrush="{DynamicResource DangerColor}" BorderThickness="1" Foreground="{DynamicResource DangerColor}" FontSize="11" Height="28" Padding="10,0"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
+
