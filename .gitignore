@@ -1,0 +1,19 @@
+# Build output and temporary directories
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# WebView2 cache & runtime data
+EBWebView/
+EnterprisePOS_Desktop_WebView/
+*.log
+*.dmp
+
+# OS-specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
