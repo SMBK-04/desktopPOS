@@ -97,30 +97,44 @@ namespace EnterprisePOS.Desktop
 
             // Find backend directory
             string appDir = AppDomain.CurrentDomain.BaseDirectory;
-            string backendDll = Path.Combine(appDir, "EnterprisePOS.dll");
-            string workingDir = appDir;
+            string backendSubDir = Path.Combine(appDir, "backend");
+            string backendExe = Path.Combine(backendSubDir, "EnterprisePOS.exe");
+            string workingDir = backendSubDir;
 
-            if (!File.Exists(backendDll))
+            if (!File.Exists(backendExe))
             {
-                // Fallback to development folder path
-                string devPath = @"C:\Users\SMBK\EnterprisePOS_Offline\bin\Debug\net8.0\EnterprisePOS.dll";
-                if (File.Exists(devPath))
-                {
-                    backendDll = devPath;
-                    workingDir = @"C:\Users\SMBK\EnterprisePOS_Offline";
-                }
+                backendExe = Path.Combine(appDir, "EnterprisePOS.exe");
+                workingDir = appDir;
             }
 
-            var psi = new ProcessStartInfo
+            ProcessStartInfo psi;
+            if (File.Exists(backendExe))
             {
-                FileName = "dotnet",
-                Arguments = $"\"{backendDll}\" --urls \"{PosUrl}\"",
-                WorkingDirectory = workingDir,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = false,
-                RedirectStandardError = false
-            };
+                psi = new ProcessStartInfo
+                {
+                    FileName = backendExe,
+                    Arguments = $"--urls \"{PosUrl}\"",
+                    WorkingDirectory = workingDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false
+                };
+            }
+            else
+            {
+                string backendDll = Path.Combine(appDir, "EnterprisePOS.dll");
+                psi = new ProcessStartInfo
+                {
+                    FileName = "dotnet",
+                    Arguments = $"\"{backendDll}\" --urls \"{PosUrl}\"",
+                    WorkingDirectory = workingDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = false,
+                    RedirectStandardError = false
+                };
+            }
 
             psi.EnvironmentVariables["ASPNETCORE_URLS"] = PosUrl;
             psi.EnvironmentVariables["ASPNETCORE_ENVIRONMENT"] = "Production";
