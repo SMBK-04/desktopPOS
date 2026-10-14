@@ -1,0 +1,104 @@
+@model EnterprisePOS.Models.ViewModels.ReportFilterViewModel
+@{
+    ViewBag.Title = "Reports";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-bar-chart-fill me-2" style="color:var(--accent);"></i>Reports & Analytics</div>
+        <div class="page-subtitle">Business intelligence and performance insights</div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profit & Loss -->
+    <div class="col-md-4">
+        <div class="pos-card h-100">
+            <div style="font-size:40px;margin-bottom:16px;">📊</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Profit & Loss</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Total revenue, cost, expenses, and net profit for any date range.</div>
+            <form asp-action="ProfitLoss" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label-pos">From</label>
+                        <input type="date" name="FromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label-pos">To</label>
+                        <input type="date" name="ToDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+                    </div>
+                </div>
+                <button type="submit" class="btn-pos btn-primary-pos w-100" style="justify-content:center;">
+                    <i class="bi bi-graph-up-arrow me-2"></i>Generate P&L
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="col-md-4">
+        <div class="pos-card h-100">
+            <div style="font-size:40px;margin-bottom:16px;">🏆</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Top Products</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Best-selling products ranked by revenue and quantity sold.</div>
+            <form asp-action="TopProducts" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label-pos">From</label>
+                        <input type="date" name="FromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label-pos">To</label>
+                        <input type="date" name="ToDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+                    </div>
+                </div>
+                <button type="submit" class="btn-pos btn-warning-pos w-100" style="justify-content:center;">
+                    <i class="bi bi-trophy-fill me-2"></i>View Top Products
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Daily Sales -->
+    <div class="col-md-4">
+        <div class="pos-card h-100">
+            <div style="font-size:40px;margin-bottom:16px;">📅</div>
+            <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Daily Sales</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Day-by-day breakdown of orders, revenue, and profit.</div>
+            <form asp-action="DailySales" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label-pos">From</label>
+                        <input type="date" name="FromDate" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label-pos">To</label>
+                        <input type="date" name="ToDate" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+                    </div>
+                </div>
+                <button type="submit" class="btn-pos btn-success-pos w-100" style="justify-content:center;">
+                    <i class="bi bi-calendar-range-fill me-2"></i>View Daily Sales
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Export Row -->
+<div class="pos-card mt-4">
+    <div style="font-size:16px;font-weight:600;margin-bottom:4px;">Quick Export</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Export sales data for the last 30 days</div>
+    <div class="d-flex gap-8 flex-wrap">
+        <a href="/Reports/ExportCsv?from=@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")&to=@DateTime.Today.ToString("yyyy-MM-dd")"
+           class="btn-pos btn-ghost">
+            <i class="bi bi-filetype-csv me-2"></i>CSV (Last 30 days)
+        </a>
+        <a href="/Reports/ExportPdf?from=@DateTime.Today.AddDays(-30).ToString("yyyy-MM-dd")&to=@DateTime.Today.ToString("yyyy-MM-dd")"
+           class="btn-pos btn-primary-pos">
+            <i class="bi bi-file-pdf-fill me-2"></i>PDF Report (Last 30 days)
+        </a>
+    </div>
+</div>

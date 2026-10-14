@@ -6,6 +6,7 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         mc:Ignorable="d"
         Title="Enterprise POS — Offline Desktop Edition" 
+        Icon="logo.png"
         Height="800" Width="1280"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
@@ -19,8 +20,10 @@
         <!-- Splash / Starting Screen -->
         <Border x:Name="splashOverlay" Background="#0f172a" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                <TextBlock Text="Enterprise POS" Foreground="#ffffff" FontSize="32" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,6" />
-                <TextBlock Text="Offline Desktop System" Foreground="#94a3b8" FontSize="16" HorizontalAlignment="Center" Margin="0,0,0,24" />
+                <Image Source="logo.png" Width="110" Height="110" Margin="0,0,0,16" HorizontalAlignment="Center" />
+                <TextBlock Text="Enterprise POS" Foreground="#ffffff" FontSize="30" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <TextBlock Text="Enterprise Solutions — Efficiency at Scale" Foreground="#38bdf8" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                <TextBlock Text="Offline Desktop System" Foreground="#94a3b8" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,22" />
                 <ProgressBar IsIndeterminate="True" Width="260" Height="6" Foreground="#6366f1" Background="#1e293b" BorderThickness="0" Margin="0,0,0,16" />
                 <TextBlock x:Name="statusText" Text="Starting offline POS engine..." Foreground="#cbd5e1" FontSize="13" HorizontalAlignment="Center" />
             </StackPanel>

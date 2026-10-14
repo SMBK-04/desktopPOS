@@ -1,0 +1,82 @@
+@model EnterprisePOS.Models.ViewModels.DealCreateViewModel
+@{
+    ViewBag.Title = "Create Deal";
+    var products = Model.Products;
+}
+
+<div class="container p-4" style="max-width: 700px;">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted mb-2 d-inline-block">
+            <i class="bi bi-arrow-left me-1"></i> Back to deals
+        </a>
+        <h1 class="h3 mb-0" style="color: var(--text-primary); font-weight:700;">Create Deal</h1>
+        <p class="text-muted">Register a custom priced bundle deal by selecting menu products and quantities.</p>
+    </div>
+
+    <div class="card border-0" style="background-color: var(--bg-card); border-radius: 12px; border: 1px solid var(--border) !important;">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" style="font-size: 14px;"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;"></label>
+                    <input asp-for="Name" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required placeholder="e.g. Burger + Fries Combo" />
+                    <span asp-validation-for="Name" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Price" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;"></label>
+                        <input asp-for="Price" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required placeholder="e.g. 750" />
+                        <span asp-validation-for="Price" class="text-danger" style="font-size: 12px;"></span>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end pb-2">
+                        <div class="form-check form-switch">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" role="switch" style="cursor: pointer;">
+                            <label class="form-check-label text-muted" asp-for="IsActive" style="font-size: 13px; cursor: pointer;"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label d-block" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Select Products to Include &amp; Quantities</label>
+                    <div class="border rounded p-3" style="background-color: var(--bg-hover); border-color: var(--border); max-height: 350px; overflow-y: auto;">
+                        @if (!products.Any())
+                        {
+                            <p class="text-muted mb-0" style="font-size: 13px;">No active products found in inventory.</p>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < Model.Products.Count; i++)
+                            {
+                                <div class="row align-items-center mb-3">
+                                    <div class="col-8">
+                                        <div class="form-check">
+                                            <input type="hidden" asp-for="Products[i].ProductId" />
+                                            <input type="hidden" asp-for="Products[i].ProductName" />
+                                            <input type="hidden" asp-for="Products[i].ProductPrice" />
+                                            <input class="form-check-input" type="checkbox" asp-for="Products[i].IsSelected" id="prod_@i" style="cursor: pointer;" />
+                                            <label class="form-check-label text-white" for="prod_@i" style="font-size: 13px; cursor: pointer;">
+                                                @Model.Products[i].ProductName <span class="text-muted">(Rs @Model.Products[i].ProductPrice.ToString("N2"))</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text text-white bg-dark border-secondary" style="font-size:11px;">Qty</span>
+                                            <input type="number" asp-for="Products[i].Quantity" min="1" class="form-control text-white bg-dark border-secondary" style="font-size:12px;" />
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2" style="background-color: var(--accent); border-color: var(--accent); font-weight:600; border-radius: 8px;">
+                    Create Deal
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

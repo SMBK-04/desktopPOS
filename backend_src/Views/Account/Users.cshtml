@@ -1,0 +1,196 @@
+@model IEnumerable<EnterprisePOS.Models.ViewModels.UserListViewModel>
+@{
+    ViewBag.Title = "Users & Roles";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-people-fill me-2" style="color:var(--accent);"></i>Users & Roles</div>
+        <div class="page-subtitle">Manage team members and access control</div>
+    </div>
+    <a asp-action="CreateUser" class="btn-pos btn-primary-pos">
+        <i class="bi bi-person-plus-fill"></i> Add User
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    @foreach (var roleGroup in Model.GroupBy(u => u.Role))
+    {
+        <div class="col-auto">
+            <div class="badge-pos badge-accent" style="font-size:13px;padding:8px 16px;">
+                @roleGroup.Key: @roleGroup.Count()
+            </div>
+        </div>
+    }
+</div>
+
+<div class="pos-card" style="overflow-x:auto;">
+    <table class="pos-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Email</th>
+                <th>Password</th>
+                <th>Employee Code</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last Login</th>
+                <th>Joined</th>
+                <th style="text-align:right;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model)
+            {
+                <tr>
+                    <td>
+                        <div class="d-flex align-center gap-8">
+                            <div style="width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;color:white;font-size:15px;flex-shrink:0;">
+                                @u.FullName.Substring(0,1).ToUpper()
+                            </div>
+                            <div class="fw-600">@u.FullName</div>
+                        </div>
+                    </td>
+                    <td style="color:var(--text-muted);">@u.Email</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span id="pw-masked-@u.Id" style="font-family:monospace; font-size:13px; letter-spacing:2px;">••••••••</span>
+                            <span id="pw-plain-@u.Id" class="d-none" style="font-family:monospace; font-size:13px; color:var(--accent); font-weight:600;">@(string.IsNullOrEmpty(u.PasswordPlain) ? "—" : u.PasswordPlain)</span>
+                            <button type="button" class="btn-pos btn-ghost" style="padding:2px 6px; font-size:12px;" onclick="togglePasswordVisibility('@u.Id')" title="Show / Hide Password">
+                                <i id="eye-icon-@u.Id" class="bi bi-eye-fill"></i>
+                            </button>
+                            <button type="button" class="btn-pos btn-ghost" style="padding:2px 6px; font-size:12px;" onclick="copyPassword('@(string.IsNullOrEmpty(u.PasswordPlain) ? "" : u.PasswordPlain)')" title="Copy Password">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td style="font-family:monospace;">@(u.EmployeeCode ?? "—")</td>
+                    <td>
+                        @{
+                            var roleClass = u.Role switch {
+                                "Administrator" => "badge-danger",
+                                "Manager" => "badge-warning",
+                                "Cashier" => "badge-info",
+                                _ => "badge-accent"
+                            };
+                        }
+                        <span class="badge-pos @roleClass">@u.Role</span>
+                    </td>
+                    <td>
+                        @if (u.IsActive)
+                        { <span class="badge-pos badge-success">Active</span> }
+                        else
+                        { <span class="badge-pos badge-danger">Inactive</span> }
+                    </td>
+                    <td style="font-size:12px;color:var(--text-muted);">
+                        @(u.LastLoginAt.HasValue ? u.LastLoginAt.Value.ToString("dd MMM HH:mm") : "Never")
+                    </td>
+                    <td style="font-size:12px;color:var(--text-muted);">@u.CreatedAt.ToString("dd MMM yyyy")</td>
+                    <td style="text-align:right;">
+                        <div class="d-inline-flex align-items-center gap-2">
+                            <button type="button" class="btn-pos btn-ghost" style="padding:6px 12px;font-size:12px;color:var(--accent);" onclick="openChangePasswordModal('@u.Id', '@u.FullName', '@u.Email')">
+                                <i class="bi bi-key-fill"></i> Change PW
+                            </button>
+                            <form asp-action="ToggleUser" asp-route-id="@u.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-pos @(u.IsActive ? "btn-danger-pos" : "btn-success-pos")" style="padding:6px 12px;font-size:12px;">
+                                    @if (u.IsActive) { <span><i class="bi bi-person-x-fill"></i> Deactivate</span> }
+                                    else { <span><i class="bi bi-person-check-fill"></i> Activate</span> }
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:16px 24px;">
+                <h5 class="modal-title" style="color:var(--text-primary);font-size:16px;font-weight:600;">
+                    <i class="bi bi-key-fill me-2" style="color:var(--accent);"></i>Change Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="ChangePassword" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body" style="padding:24px;">
+                    <input type="hidden" name="userId" id="modalUserId" />
+                    <div class="mb-3">
+                        <label class="form-label-pos">User / Account</label>
+                        <input type="text" id="modalUserName" class="form-control-pos" readonly style="opacity:0.8;background:var(--bg-input);" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-pos">New Password *</label>
+                        <div class="input-group" style="display:flex;">
+                            <input type="password" name="newPassword" id="modalNewPassword" class="form-control-pos" required minlength="6" placeholder="Enter new password (min 6 chars)" style="flex:1;border-top-right-radius:0;border-bottom-right-radius:0;" />
+                            <button type="button" class="btn-pos btn-ghost" onclick="toggleModalPasswordVisibility()" style="border-radius:0 var(--radius) var(--radius) 0;border-left:none;padding:0 14px;">
+                                <i id="modalEyeIcon" class="bi bi-eye-fill"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted" style="font-size:11px;margin-top:4px;display:block;">Password will be updated immediately across the system.</small>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top:1px solid var(--border);padding:16px 24px;">
+                    <button type="button" class="btn-pos btn-ghost" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-pos btn-primary-pos">
+                        <i class="bi bi-check-circle-fill me-1"></i> Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility(id) {
+        const masked = document.getElementById('pw-masked-' + id);
+        const plain = document.getElementById('pw-plain-' + id);
+        const icon = document.getElementById('eye-icon-' + id);
+        if (masked.classList.contains('d-none')) {
+            masked.classList.remove('d-none');
+            plain.classList.add('d-none');
+            icon.className = 'bi bi-eye-fill';
+        } else {
+            masked.classList.add('d-none');
+            plain.classList.remove('d-none');
+            icon.className = 'bi bi-eye-slash-fill';
+        }
+    }
+
+    function copyPassword(pw) {
+        if (!pw) return;
+        navigator.clipboard.writeText(pw).then(() => {
+            if (typeof showToast === 'function') {
+                showToast('Password copied to clipboard!', 'info');
+            } else {
+                alert('Password copied!');
+            }
+        });
+    }
+
+    function openChangePasswordModal(userId, fullName, email) {
+        document.getElementById('modalUserId').value = userId;
+        document.getElementById('modalUserName').value = fullName + ' (' + email + ')';
+        document.getElementById('modalNewPassword').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+        modal.show();
+    }
+
+    function toggleModalPasswordVisibility() {
+        const input = document.getElementById('modalNewPassword');
+        const icon = document.getElementById('modalEyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'bi bi-eye-slash-fill';
+        } else {
+            input.type = 'password';
+            icon.className = 'bi bi-eye-fill';
+        }
+    }
+</script>

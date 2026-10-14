@@ -1,0 +1,37 @@
+Name,ProductCode,Barcode,SKU,Category,CostPrice,SellingPrice,TaxRate,CurrentStock,LowStockThreshold
+Zinger Burger,,,BRG-001,Burgers,100,200,0,9999,0
+Zinger Burger with Cheese,,,BRG-002,Burgers,120,250,0,9999,0
+Crispy Chicken Burger,,,BRG-003,Burgers,100,200,0,9999,0
+Crispy Chicken Burger with Cheese,,,BRG-004,Burgers,120,250,0,9999,0
+Chapli Kabab Burger,,,BRG-005,Burgers,120,250,0,9999,0
+Gyro Wrap,,,WRP-001,Wraps,100,200,0,9999,0
+Twister Wrap,,,WRP-002,Wraps,100,200,0,9999,0
+Zinger Wrap,,,WRP-003,Wraps,100,200,0,9999,0
+Wings (5 pcs),,,ADD-001,Add Ons,150,300,0,9999,0
+Chicken Strips,,,ADD-002,Add Ons,150,300,0,9999,0
+Egg,,,ADD-003,Add Ons,10,30,0,9999,0
+Cheese,,,ADD-004,Add Ons,20,50,0,9999,0
+Plain Fries,,,FRS-001,Fries,50,100,0,9999,0
+Mayo Garlic Fries,,,FRS-002,Fries,60,130,0,9999,0
+Loaded Fries,,,FRS-003,Fries,150,300,0,9999,0
+Pizza Fries (Small),,,FRS-004,Fries,180,350,0,9999,0
+Pizza Fries (Large),,,FRS-005,Fries,350,700,0,9999,0
+Breadline Special Zinger,,,PRM-001,Premium Menu,200,450,0,9999,0
+Breadline Grilled Beef Burger,,,PRM-002,Premium Menu,200,450,0,9999,0
+Breadline Chicken Burger,,,PRM-003,Premium Menu,180,400,0,9999,0
+Breadline Cheese Burst Leg Piece,,,PRM-004,Premium Menu,250,500,0,9999,0
+Breadline Cheese Burst Chest Piece,,,PRM-005,Premium Menu,300,600,0,9999,0
+Breadline Plain Broast Leg Piece,,,PRM-006,Premium Menu,200,450,0,9999,0
+Breadline Plain Broast Chest Piece,,,PRM-007,Premium Menu,250,500,0,9999,0
+Breadline Club Sandwich,,,PRM-008,Premium Menu,180,400,0,9999,0
+Beef Sandwich,,,SND-001,Sandwiches,100,200,0,9999,0
+Chicken Sandwich,,,SND-002,Sandwiches,90,180,0,9999,0
+Chicken with Egg,,,SND-003,Sandwiches,100,200,0,9999,0
+Potato Sandwich,,,SND-004,Sandwiches,50,100,0,9999,0
+Extra Cheese,,,SND-005,Sandwiches,20,50,0,9999,0
+Pepsi / Coke,,,BEV-001,Beverages,30,60,0,9999,0
+Sprite / 7UP,,,BEV-002,Beverages,30,60,0,9999,0
+Fanta / Mirinda,,,BEV-003,Beverages,30,60,0,9999,0
+Mountain Dew,,,BEV-004,Beverages,30,60,0,9999,0
+Sting,,,BEV-005,Beverages,40,80,0,9999,0
+Mineral Water,,,BEV-006,Beverages,20,40,0,9999,0

@@ -1,0 +1,66 @@
+@model EnterprisePOS.Models.ViewModels.UserCreateViewModel
+@{
+    ViewBag.Title = "Add User";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-person-plus-fill me-2" style="color:var(--accent);"></i>Add Team Member</div>
+        <div class="page-subtitle">Create a new user account and assign role</div>
+    </div>
+    <a asp-action="Users" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="pos-card">
+            <form asp-action="CreateUser" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label-pos">Full Name *</label>
+                        <input asp-for="FullName" class="form-control-pos" placeholder="e.g., John Smith" />
+                        <span asp-validation-for="FullName" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label-pos">Email Address *</label>
+                        <div class="input-group" style="display: flex;">
+                            <input asp-for="Email" class="form-control-pos" type="text" placeholder="e.g. john" style="flex: 1; border-top-right-radius: 0; border-bottom-right-radius: 0;" />
+                            <span class="input-group-text" style="background: var(--bg-card); border: 1px solid var(--border); border-left: none; color: var(--text-muted); border-top-right-radius: var(--radius); border-bottom-right-radius: var(--radius); font-family: monospace; font-size: 13px; display: flex; align-items: center; padding: 0 12px;">@ViewBag.DomainSuffix</span>
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-pos">Employee Code</label>
+                        <input asp-for="EmployeeCode" class="form-control-pos" placeholder="EMP-003" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-pos">Password *</label>
+                        <input asp-for="Password" class="form-control-pos" type="password" placeholder="Min 8 chars, uppercase, number, symbol" />
+                        <span asp-validation-for="Password" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-pos">Role *</label>
+                        <select asp-for="Role" class="form-control-pos">
+                            @foreach (var r in Model.AvailableRoles)
+                            {
+                                <option value="@r">@r</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsActive" class="form-label-pos mb-0">Account Active (user can login immediately)</label>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <button type="submit" class="btn-pos btn-primary-pos w-100" style="justify-content:center;padding:13px;">
+                            <i class="bi bi-person-check-fill me-2"></i>Create Account
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

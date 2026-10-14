@@ -1,0 +1,81 @@
+@model IEnumerable<EnterprisePOS.Models.ViewModels.DealListViewModel>
+@{
+    ViewBag.Title = "Manage Deals";
+}
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0" style="color: var(--text-primary); font-weight:700;">Deals & Bundles</h1>
+            <p class="text-muted mb-0">Create custom priced bundles from existing menu items.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary" style="background-color: var(--accent); border-color: var(--accent);">
+            <i class="bi bi-plus-lg me-2"></i>Create Deal
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0" role="alert" style="background-color: #10b98122; color: #10b981; border-radius: 8px;">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="pos-card" style="overflow-x:auto;">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-tag-fill text-muted" style="font-size: 48px;"></i>
+                <h5 class="mt-3" style="color: var(--text-primary);">No Deals Created Yet</h5>
+                <p class="text-muted">Bundled deals will appear here once configured.</p>
+            </div>
+        }
+        else
+        {
+            <table class="pos-table">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Deal Name</th>
+                        <th>Bundle Price</th>
+                        <th>Items Count</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var deal in Model)
+                    {
+                        <tr>
+                            <td class="ps-4 fw-semibold">@deal.Name</td>
+                            <td>Rs @deal.Price.ToString("N2")</td>
+                            <td>@deal.ProductCount items</td>
+                            <td>
+                                @if (deal.IsActive)
+                                {
+                                    <span class="badge-pos badge-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-pos badge-danger">Inactive</span>
+                                }
+                            </td>
+                            <td class="pe-4 text-end">
+                                <div class="d-flex justify-content-end gap-8">
+                                    <a asp-action="Edit" asp-route-id="@deal.Id" class="btn-pos btn-ghost" style="padding:6px 10px;" title="Edit">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@deal.Id" method="post" onsubmit="return confirm('Are you sure you want to delete this deal?');" class="d-inline">
+                                        <button type="submit" class="btn-pos btn-danger" style="padding:6px 10px;" title="Delete">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>

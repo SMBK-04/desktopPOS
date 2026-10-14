@@ -1,0 +1,133 @@
+@model EnterprisePOS.Models.ViewModels.SaleListViewModel
+@{
+    ViewBag.Title = "Sales History";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-receipt-cutoff me-2" style="color:var(--accent);"></i>Sales History</div>
+        <div class="page-subtitle">All transactions and receipts</div>
+    </div>
+    <div class="d-flex gap-8">
+        <a href="/Reports/ExportCsv?from=@Model.FromDate.ToString("yyyy-MM-dd")&to=@Model.ToDate.ToString("yyyy-MM-dd")" class="btn-pos btn-ghost">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+        <a href="/Reports/ExportPdf?from=@Model.FromDate.ToString("yyyy-MM-dd")&to=@Model.ToDate.ToString("yyyy-MM-dd")" class="btn-pos btn-primary-pos">
+            <i class="bi bi-file-pdf-fill"></i> Export PDF
+        </a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="pos-card mb-4">
+    <form method="get" class="d-flex gap-8 flex-wrap align-center">
+        <div>
+            <label class="form-label-pos">From</label>
+            <input type="date" name="from" value="@Model.FromDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+        </div>
+        <div>
+            <label class="form-label-pos">To</label>
+            <input type="date" name="to" value="@Model.ToDate.ToString("yyyy-MM-dd")" class="form-control-pos" />
+        </div>
+
+        <div>
+            <label class="form-label-pos">Order Source</label>
+            <select name="source" class="form-select-pos">
+                <option value="All" selected="@(Model.StatusFilter == "All" || string.IsNullOrEmpty(Model.StatusFilter))">All Sales</option>
+                <option value="Restaurant" selected="@(Model.StatusFilter == "Restaurant")">Restaurant (Dine-in / Takeaway)</option>
+                <option value="Delivery" selected="@(Model.StatusFilter == "Delivery")">Delivery (Online)</option>
+            </select>
+        </div>
+
+        <div style="align-self:flex-end;">
+            <button type="submit" class="btn-pos btn-primary-pos"><i class="bi bi-filter"></i> Filter</button>
+        </div>
+    </form>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon revenue"><i class="bi bi-currency-dollar"></i></div>
+            <div>
+                <div class="kpi-label">Total Revenue</div>
+                <div class="kpi-value">Rs @Model.TotalRevenue.ToString("N2")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon orders"><i class="bi bi-bag-check"></i></div>
+            <div>
+                <div class="kpi-label">Total Orders</div>
+                <div class="kpi-value">@Model.TotalOrders</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="kpi-card">
+            <div class="kpi-icon profit"><i class="bi bi-graph-up"></i></div>
+            <div>
+                <div class="kpi-label">Avg Order Value</div>
+                <div class="kpi-value">Rs @(Model.TotalOrders > 0 ? (Model.TotalRevenue / Model.TotalOrders).ToString("N2") : "0.00")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Table -->
+<div class="pos-card" style="overflow-x:auto;">
+    <table class="pos-table">
+        <thead>
+            <tr>
+                <th>Invoice #</th>
+                <th>Date & Time</th>
+                <th>Customer</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Type</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.Sales)
+            {
+                <tr>
+                    <td><span class="fw-600 text-accent">@s.InvoiceNumber</span></td>
+                    <td>
+                        <div>@s.CreatedAt.ToString("dd MMM yyyy")</div>
+                        <div style="font-size:11px;color:var(--text-muted);">@s.CreatedAt.ToString("hh:mm tt")</div>
+                    </td>
+                    <td>@(s.Customer?.Name ?? "Walk-In")</td>
+                    <td style="color:var(--text-muted);">@s.SaleItems.Count items</td>
+                    <td><span class="fw-600">Rs @s.TotalAmount.ToString("N2")</span></td>
+                    <td><span class="badge-pos badge-info">@s.PaymentMethod</span></td>
+                    <td><span class="badge-pos badge-accent">@s.OrderType</span></td>
+
+                    <td>
+                        <div class="d-flex gap-8">
+                            <a href="/Sales/Details/@s.Id" class="btn-pos btn-ghost" style="padding:6px 10px;" title="View Details">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+                            <a href="/Sales/PrintCashierReceipt/@s.Id" class="btn-pos btn-primary-pos" style="padding:6px 10px;" title="Receipt" target="_blank">
+                                <i class="bi bi-receipt"></i>
+                            </a>
+                            <a href="/Sales/PrintKitchenReceipt/@s.Id" class="btn-pos btn-warning-pos" style="padding:6px 10px;" title="Kitchen Receipt" target="_blank">
+                                <i class="bi bi-printer"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Sales.Any())
+            {
+                <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="bi bi-inbox" style="font-size:32px;display:block;margin-bottom:12px;opacity:0.3;"></i>
+                    No sales found for selected period.
+                </td></tr>
+            }
+        </tbody>
+    </table>
+</div>

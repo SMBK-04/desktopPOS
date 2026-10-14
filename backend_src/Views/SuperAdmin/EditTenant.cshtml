@@ -1,0 +1,71 @@
+@model EnterprisePOS.Models.ViewModels.EditTenantViewModel
+@{
+    ViewBag.Title = "Edit Restaurant";
+}
+
+<div class="container p-4" style="max-width: 580px;">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted mb-2 d-inline-block">
+            <i class="bi bi-arrow-left me-1"></i> Back to list
+        </a>
+        <h1 class="h3 mb-1" style="color: var(--text-primary); font-weight:700;">Edit Restaurant</h1>
+        <p class="text-muted">Modify restaurant name, branch, subscription date, or administrator account.</p>
+    </div>
+
+    <div class="card border-0" style="background-color: var(--bg-card); border-radius: 12px; border: 1px solid var(--border) !important;">
+        <div class="card-body p-4">
+            <form asp-action="EditTenant" method="post" autocomplete="off">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" style="font-size: 14px;"></div>
+                <input type="hidden" asp-for="Id" />
+
+                <h5 class="mb-3" style="color: var(--text-primary); font-weight:600; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <i class="bi bi-shop me-2" style="color:var(--accent);"></i>Restaurant Details
+                </h5>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Restaurant / Business Name</label>
+                    <input asp-for="Name" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required autocomplete="off" />
+                    <span asp-validation-for="Name" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="BranchName" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Branch Name</label>
+                    <input asp-for="BranchName" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required autocomplete="off" />
+                    <span asp-validation-for="BranchName" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="SubscriptionEndDate" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Subscription Expiry Date</label>
+                    <input asp-for="SubscriptionEndDate" type="date" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required value="@Model.SubscriptionEndDate.ToString("yyyy-MM-dd")" autocomplete="off" />
+                    <span asp-validation-for="SubscriptionEndDate" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <h5 class="mb-3" style="color: var(--text-primary); font-weight:600; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <i class="bi bi-person-badge-fill me-2" style="color:var(--accent);"></i>Administrator Account
+                </h5>
+                
+                <div class="mb-3">
+                    <label asp-for="AdminFullName" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Admin Full Name</label>
+                    <input asp-for="AdminFullName" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required autocomplete="off" />
+                    <span asp-validation-for="AdminFullName" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="AdminEmail" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Admin Email</label>
+                    <input asp-for="AdminEmail" type="email" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required autocomplete="off" />
+                    <span asp-validation-for="AdminEmail" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="AdminPassword" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">New Admin Password</label>
+                    <input asp-for="AdminPassword" type="password" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" placeholder="Leave blank to keep existing password" autocomplete="new-password" />
+                    <span asp-validation-for="AdminPassword" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2" style="background-color: var(--accent); border-color: var(--accent); font-weight:600; border-radius: 8px;">
+                    <i class="bi bi-check-circle-fill me-1"></i> Save Changes
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

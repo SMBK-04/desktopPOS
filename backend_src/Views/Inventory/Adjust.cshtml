@@ -1,0 +1,61 @@
+@model EnterprisePOS.Models.ViewModels.InventoryAdjustViewModel
+@{
+    ViewBag.Title = "Adjust Stock";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-layers-half me-2" style="color:var(--accent);"></i>Adjust Stock</div>
+        <div class="page-subtitle">@Model.ProductName</div>
+    </div>
+    <a href="/Inventory" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="pos-card">
+            <div class="kpi-card mb-4" style="background:var(--bg-hover);">
+                <div class="kpi-icon orders"><i class="bi bi-boxes"></i></div>
+                <div>
+                    <div class="kpi-label">Current Stock</div>
+                    <div class="kpi-value">@Model.CurrentStock units</div>
+                </div>
+            </div>
+
+            <form asp-action="Adjust" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ProductId" />
+                <input type="hidden" asp-for="ProductName" />
+                <input type="hidden" asp-for="CurrentStock" />
+
+                <div class="mb-3">
+                    <label class="form-label-pos">Movement Type *</label>
+                    <select asp-for="MovementType" class="form-control-pos">
+                        <option value="Adjustment">📊 Manual Adjustment</option>
+                        <option value="Purchase">📦 Purchase / Stock In</option>
+                        <option value="Damage">💔 Damage / Loss</option>
+                        <option value="Return">↩️ Customer Return</option>
+                        <option value="Transfer">↕️ Transfer</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label-pos">Quantity *</label>
+                    <input asp-for="Quantity" class="form-control-pos" type="number" placeholder="Use negative for reduction (e.g. -5)" required />
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+                        Positive = add stock. Negative = reduce stock.
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label-pos">Notes</label>
+                    <textarea asp-for="Notes" class="form-control-pos" rows="3" placeholder="Reason for adjustment..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-pos btn-primary-pos w-100" style="justify-content:center;padding:13px;">
+                    <i class="bi bi-check-circle-fill me-2"></i>Apply Adjustment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

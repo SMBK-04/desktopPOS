@@ -1,0 +1,144 @@
+@model EnterprisePOS.Models.ViewModels.SaleDetailViewModel
+@{
+    ViewBag.Title = $"Sale #{Model.Sale.InvoiceNumber}";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title">Invoice #@Model.Sale.InvoiceNumber</div>
+        <div class="page-subtitle">@Model.Sale.CreatedAt.ToString("dddd, dd MMMM yyyy HH:mm")</div>
+    </div>
+    <div class="d-flex gap-8">
+        <a href="/Sales" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <a href="/Sales/PrintCashierReceipt/@Model.Sale.Id" class="btn-pos btn-primary-pos" target="_blank">
+            <i class="bi bi-receipt"></i> Receipt
+        </a>
+        <a href="/Sales/PrintKitchenReceipt/@Model.Sale.Id" class="btn-pos btn-warning-pos" target="_blank">
+            <i class="bi bi-printer"></i> Kitchen Receipt
+        </a>
+        @if (Model.CanRefund)
+        {
+            <form asp-action="Refund" asp-route-id="@Model.Sale.Id" method="post" onsubmit="return confirm('Are you sure you want to refund this sale?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-pos btn-danger-pos">
+                    <i class="bi bi-arrow-return-left"></i> Refund
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Sale Info -->
+    <div class="col-lg-4">
+        <div class="pos-card mb-4">
+            <h6 style="font-weight:600;margin-bottom:16px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Order Information</h6>
+            <div style="display:grid;gap:12px;">
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Status</span>
+                    @if (Model.Sale.Status == EnterprisePOS.Models.Entities.SaleStatus.Completed)
+                    { <span class="badge-pos badge-success">Completed</span> }
+                    else if (Model.Sale.Status == EnterprisePOS.Models.Entities.SaleStatus.Refunded)
+                    { <span class="badge-pos badge-danger">Refunded</span> }
+                    else
+                    { <span class="badge-pos badge-warning">@Model.Sale.Status</span> }
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Order Type</span>
+                    <span class="badge-pos badge-accent">@Model.Sale.OrderType</span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Sale.TableNumber))
+                {
+                    <div class="d-flex justify-between">
+                        <span style="color:var(--text-muted);">Table #</span>
+                        <span class="fw-600">@Model.Sale.TableNumber</span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.Sale.OrderToken))
+                {
+                    <div class="d-flex justify-between">
+                        <span style="color:var(--text-muted);">Order Token</span>
+                        <span class="badge-pos badge-info">#@Model.Sale.OrderToken</span>
+                    </div>
+                }
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Payment</span>
+                    <span class="badge-pos badge-info">@Model.Sale.PaymentMethod</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Customer</span>
+                    <span class="fw-600">@(Model.Sale.Customer?.Name ?? "Walk-In")</span>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="pos-card">
+            <h6 style="font-weight:600;margin-bottom:16px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Payment Summary</h6>
+            <div style="display:grid;gap:8px;">
+                <div class="d-flex justify-between"><span style="color:var(--text-muted);">Sub-Total</span><span>Rs @Model.Sale.SubTotal.ToString("N2")</span></div>
+                @if (Model.Sale.DiscountAmount > 0)
+                {
+                    <div class="d-flex justify-between"><span style="color:var(--text-muted);">Discount</span><span style="color:var(--danger);">-Rs @Model.Sale.DiscountAmount.ToString("N2")</span></div>
+                }
+                @if (Model.Sale.TaxAmount > 0)
+                {
+                    <div class="d-flex justify-between"><span style="color:var(--text-muted);">Tax</span><span>Rs @Model.Sale.TaxAmount.ToString("N2")</span></div>
+                }
+                @if (Model.Sale.ServiceCharge > 0)
+                {
+                    <div class="d-flex justify-between"><span style="color:var(--text-muted);">Service Charge</span><span>Rs @Model.Sale.ServiceCharge.ToString("N2")</span></div>
+                }
+                <hr style="border-color:var(--border);" />
+                <div class="d-flex justify-between" style="font-size:18px;font-weight:700;">
+                    <span>TOTAL</span><span class="text-accent">Rs @Model.Sale.TotalAmount.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-between"><span style="color:var(--text-muted);">Paid</span><span>Rs @Model.Sale.AmountPaid.ToString("N2")</span></div>
+                @if (Model.Sale.ChangeGiven > 0)
+                {
+                    <div class="d-flex justify-between"><span style="color:var(--text-muted);">Change</span><span style="color:var(--success);">Rs @Model.Sale.ChangeGiven.ToString("N2")</span></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Items -->
+    <div class="col-lg-8">
+        <div class="pos-card">
+            <h6 style="font-weight:600;margin-bottom:16px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Order Items (@Model.Sale.SaleItems.Count)</h6>
+            <table class="pos-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Modifiers</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Tax</th>
+                        <th>Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Sale.SaleItems)
+                    {
+                        <tr>
+                            <td><div class="fw-600">@item.ProductName</div></td>
+                            <td style="color:var(--text-muted);font-size:12px;">@(item.Modifiers ?? "—")</td>
+                            <td>
+                                <span class="badge-pos badge-accent">×@item.Quantity</span>
+                            </td>
+                            <td>Rs @item.UnitPrice.ToString("N2")</td>
+                            <td style="color:var(--text-muted);">@item.TaxRate%</td>
+                            <td><span class="fw-600 text-accent">Rs @item.LineTotal.ToString("N2")</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (!string.IsNullOrEmpty(Model.Sale.Notes))
+            {
+                <div style="margin-top:16px;padding:12px;background:var(--bg-hover);border-radius:8px;font-size:13px;">
+                    <span style="color:var(--text-muted);">Notes: </span>@Model.Sale.Notes
+                </div>
+            }
+        </div>
+    </div>
+</div>

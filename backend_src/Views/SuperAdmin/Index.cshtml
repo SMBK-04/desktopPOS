@@ -1,0 +1,140 @@
+@model IEnumerable<EnterprisePOS.Models.ViewModels.TenantListItemViewModel>
+@{
+    ViewBag.Title = "SuperAdmin Portal";
+}
+
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0" style="color: var(--text-primary); font-weight:700;">Tenant Management</h1>
+            <p class="text-muted mb-0">Monitor active subscriptions, billing cycles, and block status.</p>
+        </div>
+        <a asp-action="CreateTenant" class="btn btn-primary" style="background-color: var(--accent); border-color: var(--accent);">
+            <i class="bi bi-plus-lg me-2"></i>New Tenant
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show border-0" role="alert" style="background-color: #10b98122; color: #10b981; border-radius: 8px;">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="pos-card" style="overflow-x:auto;">
+        <table class="pos-table">
+            <thead>
+                <tr>
+                    <th class="ps-4">Business Name</th>
+                    <th>Branch</th>
+                    <th>Admin Credentials</th>
+                    <th>Created At</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th class="pe-4 text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tenant in Model)
+                {
+                    var isExpired = DateTime.UtcNow > tenant.SubscriptionEndDate;
+                    var passId = "pass_" + tenant.Id.ToString("N");
+                    <tr>
+                        <td class="ps-4 fw-semibold">@tenant.Name</td>
+                        <td>@tenant.BranchName</td>
+                        <td>
+                            <div style="font-size: 12px;">
+                                <strong style="color:var(--accent);">ID:</strong> <span style="color:#6366f1;font-weight:600;">@(string.IsNullOrEmpty(tenant.AdminEmail) ? "—" : tenant.AdminEmail)</span>
+                            </div>
+                            <div style="font-size: 12px; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
+                                <strong style="color:var(--accent);">PW:</strong>
+                                @if (!string.IsNullOrEmpty(tenant.AdminPasswordPlain))
+                                {
+                                    <span id="@passId" data-pass="@tenant.AdminPasswordPlain" style="color:#94a3b8; font-family:monospace;">••••••••</span>
+                                    <button type="button" class="btn btn-sm p-0 text-muted" onclick="togglePasswordVisibility('@passId', this)" style="background:none;border:none;line-height:1;" title="Toggle visibility">
+                                        <i class="bi bi-eye-slash" style="font-size:13px;"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </div>
+                        </td>
+                        <td>@tenant.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <span class="fw-semibold @(isExpired ? "text-danger" : "text-success")">
+                                @tenant.SubscriptionEndDate.ToString("yyyy-MM-dd")
+                            </span>
+                            @if (isExpired)
+                            {
+                                <span class="badge-pos badge-danger ms-2">Expired</span>
+                            }
+                        </td>
+                        <td>
+                            @if (tenant.IsBlocked)
+                            {
+                                <span class="badge-pos badge-danger">Blocked</span>
+                            }
+                            else if (isExpired)
+                            {
+                                <span class="badge-pos badge-warning">Unpaid</span>
+                            }
+                            else
+                            {
+                                <span class="badge-pos badge-success">Active</span>
+                            }
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="d-flex justify-content-end align-items-center gap-8">
+                                <!-- Update Date Form -->
+                                <form asp-action="UpdateSubscription" method="post" class="d-inline-flex align-items-center gap-2">
+                                    <input type="hidden" name="id" value="@tenant.Id" />
+                                    <input type="date" name="subscriptionEndDate" value="@tenant.SubscriptionEndDate.ToString("yyyy-MM-dd")" class="form-control-pos" style="width: 140px; font-size:12px; height: 32px;" required />
+                                    <button type="submit" class="btn-pos btn-ghost" style="padding: 4px 10px; font-size:11px;">Renew</button>
+                                </form>
+
+                                <!-- Edit Button -->
+                                <a asp-action="EditTenant" asp-route-id="@tenant.Id" class="btn-pos btn-ghost" style="padding: 6px 12px; font-size: 12px;">Edit</a>
+
+                                <!-- Block Form -->
+                                <form asp-action="ToggleBlock" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@tenant.Id" />
+                                    @if (tenant.IsBlocked)
+                                    {
+                                        <button type="submit" class="btn-pos btn-success" style="padding: 6px 12px; font-size: 12px;">Unblock</button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" class="btn-pos btn-danger" style="padding: 6px 12px; font-size: 12px;">Block</button>
+                                    }
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function togglePasswordVisibility(spanId, btn) {
+            const span = document.getElementById(spanId);
+            if (!span) return;
+            const icon = btn.querySelector('i');
+            const pass = span.getAttribute('data-pass');
+            if (span.textContent === '••••••••') {
+                span.textContent = pass;
+                span.style.color = '#38bdf8';
+                if (icon) icon.className = 'bi bi-eye';
+            } else {
+                span.textContent = '••••••••';
+                span.style.color = '#94a3b8';
+                if (icon) icon.className = 'bi bi-eye-slash';
+            }
+        }
+    </script>
+}

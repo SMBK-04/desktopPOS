@@ -1,0 +1,56 @@
+@model EnterprisePOS.Models.Entities.Category
+@{
+    ViewBag.Title = "Create Category";
+}
+
+<div class="container p-4" style="max-width: 600px;">
+    <div class="mb-4">
+        <a asp-action="Index" class="text-decoration-none text-muted mb-2 d-inline-block">
+            <i class="bi bi-arrow-left me-1"></i> Back to categories
+        </a>
+        <h1 class="h3 mb-0" style="color: var(--text-primary); font-weight:700;">Create Category</h1>
+        <p class="text-muted">Register a custom product category for organizing your menu.</p>
+    </div>
+
+    <div class="card border-0" style="background-color: var(--bg-card); border-radius: 12px; border: 1px solid var(--border) !important;">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3" style="font-size: 14px;"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;"></label>
+                    <input asp-for="Name" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" required placeholder="e.g. Burgers, Pizza, Desserts" />
+                    <span asp-validation-for="Name" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;"></label>
+                    <textarea asp-for="Description" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" rows="3" placeholder="Optional category description..."></textarea>
+                    <span asp-validation-for="Description" class="text-danger" style="font-size: 12px;"></span>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <label asp-for="DisplayOrder" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Display Order</label>
+                        <input asp-for="DisplayOrder" type="number" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" />
+                        <span asp-validation-for="DisplayOrder" class="text-danger" style="font-size: 12px;"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="ColorHex" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Accent Color</label>
+                        <input asp-for="ColorHex" type="color" class="form-control form-control-color w-100" style="background-color: var(--bg-hover); border-color: var(--border); height: 42px;" value="#6366f1" />
+                        <span asp-validation-for="ColorHex" class="text-danger" style="font-size: 12px;"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="IconClass" class="form-label" style="color: var(--text-secondary); font-size:13px; font-weight:500;">Icon Class</label>
+                        <input asp-for="IconClass" class="form-control text-white" style="background-color: var(--bg-hover); border-color: var(--border);" placeholder="e.g. bi-cup-hot" />
+                        <span asp-validation-for="IconClass" class="text-danger" style="font-size: 12px;"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2" style="background-color: var(--accent); border-color: var(--accent); font-weight:600; border-radius: 8px;">
+                    Create Category
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

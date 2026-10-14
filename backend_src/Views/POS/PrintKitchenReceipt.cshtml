@@ -1,0 +1,91 @@
+@model EnterprisePOS.Models.Entities.Sale
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Kitchen @Model.InvoiceNumber</title>
+    <style>
+        @@page {
+            size: 80mm auto;
+            margin: 0mm;
+        }
+        @@media print {
+            html, body {
+                width: 74mm !important;
+                margin: 0 !important;
+                padding: 1mm 0 2mm 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            color: #000;
+            background: #fff;
+            width: 74mm;
+            margin: 0;
+            padding: 2mm 0;
+        }
+        .hr-solid  { border: none; border-top: 2px solid #000; margin: 4px 0; }
+        .hr-dotted { border: none; border-top: 1px dashed #000; margin: 4px 0; }
+        .title     { font-size: 16px; font-weight: bold; text-align: center; letter-spacing: 1px; margin-bottom: 2px; }
+        .order-num { font-size: 14px; font-weight: bold; text-align: center; margin: 2px 0; }
+        .type      { font-size: 12px; font-weight: bold; text-align: center; margin: 1px 0; }
+        .token     { font-size: 12px; font-weight: bold; text-align: center; margin: 1px 0; }
+        .time      { font-size: 9px; text-align: center; color: #555; margin-bottom: 2px; }
+        .item      { font-size: 14px; font-weight: bold; margin: 5px 0 1px 0; }
+        .modifier  { font-size: 10px; color: #333; margin-left: 8px; }
+        .notes     { font-size: 11px; font-weight: bold; margin: 3px 0; border: 2px solid #000; padding: 3px; }
+        .end       { font-size: 11px; font-weight: bold; text-align: center; margin-top: 4px; }
+
+        /* Strictly hide Somee host watermark and advertising links */
+        a[href*="somee"], div[style*="text-align:center"], div[style*="somee"], center, footer {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            font-size: 0 !important;
+            opacity: 0 !important;
+            line-height: 0 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">** KITCHEN ORDER **</div>
+    <hr class="hr-solid" />
+    <div class="order-num">Order: @Model.InvoiceNumber</div>
+    <div class="type">Type: @Model.OrderType</div>
+    @if (!string.IsNullOrEmpty(Model.TableNumber))
+    {
+        <div class="token">Table: @Model.TableNumber</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.OrderToken))
+    {
+        <div class="token">Token: #@Model.OrderToken</div>
+    }
+    <div class="time">@Model.CreatedAt.ToString("HH:mm dd/MM/yyyy")</div>
+    <hr class="hr-solid" />
+
+    @foreach (var item in Model.SaleItems)
+    {
+        <div class="item">x@(item.Quantity) &nbsp; @item.ProductName</div>
+        @if (!string.IsNullOrEmpty(item.Modifiers))
+        {
+            <div class="modifier">&gt;&gt; @item.Modifiers</div>
+        }
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Notes))
+    {
+        <hr class="hr-dotted" />
+        <div class="notes">NOTE: @Model.Notes</div>
+    }
+
+    <hr class="hr-solid" />
+    <div class="end">END OF ORDER</div>
+</body>
+</html>

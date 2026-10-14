@@ -1,0 +1,161 @@
+@model IEnumerable<EnterprisePOS.Models.ViewModels.ProductListViewModel>
+@{
+    ViewBag.Title = "Products";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-box-seam-fill me-2" style="color:var(--accent);"></i>Products</div>
+        <div class="page-subtitle">Manage your product catalog</div>
+    </div>
+    <div class="d-flex gap-8 flex-wrap align-center">
+        <a href="/Products/ExportCsv" class="btn-pos btn-ghost">
+            <i class="bi bi-download"></i> Export CSV
+        </a>
+        <button class="btn-pos btn-ghost" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="bi bi-upload"></i> Import CSV
+        </button>
+        <a asp-action="Create" class="btn-pos btn-primary-pos">
+            <i class="bi bi-plus-lg"></i> Add Product
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="pos-card mb-4">
+    <form method="get" class="d-flex gap-8 flex-wrap align-center">
+        <input type="text" name="search" value="@ViewBag.Search" placeholder="Search name, barcode, code..." class="form-control-pos" style="max-width:300px;" />
+        <select name="categoryId" class="form-control-pos" style="width:auto;">
+            <option value="">All Categories</option>
+            @foreach (var cat in (IEnumerable<EnterprisePOS.Models.Entities.Category>)ViewBag.Categories)
+            {
+                <option value="@cat.Id" selected="@(ViewBag.CategoryId?.ToString() == cat.Id.ToString())">@cat.Name</option>
+            }
+        </select>
+        <button type="submit" class="btn-pos btn-primary-pos"><i class="bi bi-search"></i> Search</button>
+        <a asp-action="Index" class="btn-pos btn-ghost">Clear</a>
+    </form>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-auto">
+        <div class="badge-pos badge-accent" style="font-size:13px;padding:8px 16px;">
+            Total: @Model.Count() products
+        </div>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="pos-card" style="overflow-x:auto;">
+    <table class="pos-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Code / SKU</th>
+                <th>Barcode</th>
+                <th>Category</th>
+                <th>Cost</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>
+                        <div class="fw-600">@p.Name</div>
+                        @if (!string.IsNullOrEmpty(p.SKU))
+                        { <div style="font-size:11px;color:var(--text-muted);">SKU: @p.SKU</div> }
+                    </td>
+                    <td style="color:var(--text-muted);">@(p.ProductCode ?? "—")</td>
+                    <td style="font-family:monospace;font-size:12px;">@(p.Barcode ?? "—")</td>
+                    <td><span class="badge-pos badge-accent">@p.CategoryName</span></td>
+                    <td>Rs @p.CostPrice.ToString("N2")</td>
+                    <td><span class="fw-600 text-accent">Rs @p.SellingPrice.ToString("N2")</span></td>
+                    <td>
+                        @if (p.IsActive)
+                        { <span class="badge-pos badge-success">Active</span> }
+                        else
+                        { <span class="badge-pos badge-danger">Inactive</span> }
+                    </td>
+                    <td>
+                        <div class="d-flex gap-8">
+                            <a href="/Products/Edit/@p.Id" class="btn-pos btn-ghost" style="padding:6px 10px;" title="Edit">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            <button class="@(p.IsActive ? "btn-pos btn-warning" : "btn-pos btn-success")" style="padding:6px 10px;" title="@(p.IsActive ? "Deactivate" : "Activate")"
+                                    onclick="confirmToggle(@p.Id, '@Html.Raw(p.Name.Replace("'","\\\'"))', @(p.IsActive.ToString().ToLower()))">
+                                <i class="bi @(p.IsActive ? "bi-eye-slash-fill" : "bi-eye-fill")"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="bi bi-inbox" style="font-size:32px;display:block;margin-bottom:12px;opacity:0.3;"></i>
+                    No products found. <a asp-action="Create" style="color:var(--accent);">Add your first product</a>
+                </td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+            <div class="modal-body text-center" style="padding:28px;">
+                <i class="bi bi-exclamation-circle-fill" style="font-size:40px;color:var(--warning);display:block;margin-bottom:12px;" id="toggleIcon"></i>
+                <div style="font-size:16px;font-weight:600;margin-bottom:8px;" id="toggleTitle">Change Status?</div>
+                <div style="font-size:14px;color:var(--text-muted);margin-bottom:20px;" id="toggleProductName"></div>
+                <div class="d-flex gap-8 justify-content-center">
+                    <button class="btn-pos btn-ghost" data-bs-dismiss="modal">Cancel</button>
+                    <form id="toggleForm" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn-pos btn-primary-pos" id="toggleSubmitBtn">Confirm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Import CSV Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+            <div class="modal-header" style="border-color:var(--border);">
+                <h5 class="modal-title" style="color:var(--text-primary);">Import Products from CSV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:13px;color:var(--text-secondary);">
+                    CSV must have headers: <code>Name, ProductCode, Barcode, SKU, Category, CostPrice, SellingPrice, TaxRate, CurrentStock, LowStockThreshold</code>
+                </p>
+                <form asp-action="ImportCsv" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <input type="file" name="file" accept=".csv" class="form-control-pos" required />
+                    <button type="submit" class="btn-pos btn-primary-pos w-100 mt-3">
+                        <i class="bi bi-upload me-2"></i>Import Products
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function confirmToggle(id, name, isActive) {
+    document.getElementById('toggleProductName').textContent = name;
+    document.getElementById('toggleForm').action = '/Products/ToggleActive/' + id;
+    document.getElementById('toggleTitle').textContent = isActive ? 'Deactivate Product?' : 'Activate Product?';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+}

@@ -6,6 +6,20 @@ obj/
 *.userosscache
 *.sln.docstates
 
+# Publish and installer binaries (distribute via GitHub Releases)
+publish/
+publish_selfcontained/
+publish_backend_selfcontained/
+backend_bundle/
+installer_output/
+*.exe
+*.zip
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
 # WebView2 cache & runtime data
 EBWebView/
 EnterprisePOS_Desktop_WebView/

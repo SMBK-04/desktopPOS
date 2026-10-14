@@ -1,0 +1,700 @@
+@model EnterprisePOS.Models.ViewModels.PosScreenViewModel
+@{
+    Layout = null;
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+}
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POS — Enterprise POS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/pos-theme.css" />
+    <script>(function(){var t=localStorage.getItem('pos-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+    <style>
+        body { margin: 0; background: var(--bg-primary); overflow: hidden; }
+        .pos-screen { display: flex; flex-direction: column; height: 100vh; }
+        .pos-topbar {
+            background: var(--bg-card); border-bottom: 1px solid var(--border);
+            padding: 10px 20px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+        }
+        .pos-body { display: grid; grid-template-columns: 1fr 390px; gap: 0; flex: 1; min-height: 0; }
+        .products-panel { display: flex; flex-direction: column; padding: 16px; overflow: hidden; }
+        .product-scroll { flex: 1; overflow-y: auto; }
+        .cart-panel { border-left: 1px solid var(--border); display: flex; flex-direction: column; background: var(--bg-card); }
+
+        @@media (max-width: 991px) {
+            .pos-topbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+            .pos-body { grid-template-columns: 1fr 310px; }
+        }
+        @@media (max-width: 768px) {
+            body { overflow-y: auto; }
+            .pos-screen { height: auto; min-height: 100vh; }
+            .pos-body { display: flex; flex-direction: column; }
+            .cart-panel { border-left: none; border-top: 1px solid var(--border); min-height: 420px; }
+            .product-scroll { max-height: 55vh; }
+        }
+    </style>
+</head>
+<body>
+<div class="pos-screen">
+    <!-- ═══ TOP BAR ═══ -->
+    <div class="pos-topbar">
+        <a href="/Dashboard" class="btn-pos btn-ghost" style="padding:8px 12px;">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div style="font-weight:700;font-size:16px;color:var(--text-primary);">
+            <i class="bi bi-cash-stack me-2" style="color:var(--accent);"></i>Point of Sale
+        </div>
+
+        <!-- Search -->
+        <div style="flex:1;max-width:380px;position:relative;">
+            <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);"></i>
+            <input type="text" id="searchInput" class="form-control-pos" placeholder="Search products or scan barcode..." style="padding-left:38px;" />
+        </div>
+
+        <!-- Order Type -->
+        <select id="orderType" class="form-control-pos" style="width:auto;">
+            <option value="0">🍽️ Dine-In</option>
+            <option value="1" selected>🥡 Takeaway</option>
+            <option value="2">🛵 Delivery</option>
+        </select>
+
+        <!-- Table Number (shown for Dine-In) -->
+        <input type="text" id="tableNumber" class="form-control-pos" placeholder="Table #" style="width:100px;display:none;" />
+
+        <!-- Customer -->
+        <select id="customerId" class="form-control-pos" style="width:160px;">
+            <option value="">Walk-In</option>
+            @foreach (var c in Model.Customers)
+            {
+                <option value="@c.Id">@c.Name</option>
+            }
+        </select>
+
+        <!-- Hold Order -->
+        <button class="btn-pos btn-warning-pos" onclick="holdOrder()" title="Hold Order">
+            <i class="bi bi-pause-circle-fill"></i> Hold
+        </button>
+
+        <!-- Held Orders -->
+        <button class="btn-pos btn-ghost" data-bs-toggle="modal" data-bs-target="#heldOrdersModal" title="Held Orders">
+            <i class="bi bi-clock-history"></i>
+            @if (Model.HeldOrders.Any())
+            {
+                <span class="nav-badge">@Model.HeldOrders.Count</span>
+            }
+        </button>
+
+
+
+        <!-- End Shift -->
+        <form method="post" action="/Shift/EndDay" class="m-0" onsubmit="return confirm('Are you sure you want to end your shift and generate the Day End report?');">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn-pos btn-danger-pos" title="End Shift & Generate Day End Report" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:6px;">
+                <i class="bi bi-stop-circle-fill"></i> End Shift
+            </button>
+        </form>
+
+        <!-- Theme & Back -->
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+            <i class="bi bi-sun-fill" id="themeIcon"></i>
+        </button>
+    </div>
+
+    <!-- ═══ MAIN BODY ═══ -->
+    <div class="pos-body">
+
+        <!-- PRODUCTS PANEL -->
+        <div class="products-panel">
+            <!-- Category Pills -->
+            <div class="category-pills" id="categoryPills">
+                @if (ViewBag.Deals != null && ((List<EnterprisePOS.Models.Entities.Deal>)ViewBag.Deals).Any())
+                {
+                    <div class="category-pill" data-cat="Deals">🏷️ Deals</div>
+                }
+                @foreach (var cat in Model.Categories)
+                {
+                    <div class="category-pill" data-cat="@cat.Name">@cat.Name</div>
+                }
+                <div class="category-pill active" data-cat="all">All</div>
+            </div>
+
+            <!-- Product Grid -->
+            <div class="product-scroll">
+                <div class="product-grid" id="productGrid">
+                    @if (ViewBag.Deals != null)
+                    {
+                        @foreach (var d in (List<EnterprisePOS.Models.Entities.Deal>)ViewBag.Deals)
+                        {
+                            <div class="product-card"
+                                 data-id="@d.Id"
+                                 data-is-deal="true"
+                                 data-name="@d.Name"
+                                 data-price="@d.Price"
+                                 data-tax="0"
+                                 data-barcode=""
+                                 data-stock="999"
+                                 data-cat="Deals"
+                                 onclick="addToCart(this)">
+                                <div class="product-emoji" style="padding: 0; background: var(--bg-hover); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: inherit; color: var(--accent);">
+                                    🏷️
+                                </div>
+                                <div class="product-name">@d.Name</div>
+                                <div class="product-price">Rs @d.Price.ToString("N2")</div>
+                                <div class="stock-badge" style="color:var(--accent);">DEAL</div>
+                            </div>
+                        }
+                    }
+
+                    @foreach (var p in Model.Products)
+                    {
+                        <div class="product-card @(p.Stock <= 0 ? "out-of-stock" : "")"
+                             data-id="@p.Id"
+                             data-name="@p.Name"
+                             data-price="@p.Price"
+                             data-tax="@p.TaxRate"
+                             data-barcode="@p.Barcode"
+                             data-stock="@p.Stock"
+                             data-cat="@p.CategoryName"
+                             onclick="addToCart(this)">
+                            <div class="product-emoji" style="padding: 0; background: var(--bg-hover); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                @if (!string.IsNullOrEmpty(p.ImagePath))
+                                {
+                                    <img src="@p.ImagePath" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                                    <div style="display:none; font-size: inherit;">
+                                        @{
+                                            var emoji = p.CategoryName switch {
+                                                "Beverages" => "☕",
+                                                "Burger" => "🍔",
+                                                "Sandwich" => "🥪",
+                                                "Fries" => "🍟",
+                                                "Wraps" => "🌯",
+                                                _ => "📦"
+                                            };
+                                        }
+                                        @emoji
+                                    </div>
+                                }
+                                else
+                                {
+                                    var emoji = p.CategoryName switch {
+                                        "Beverages" => "☕",
+                                        "Burger" => "🍔",
+                                        "Sandwich" => "🥪",
+                                        "Fries" => "🍟",
+                                        "Wraps" => "🌯",
+                                        _ => "📦"
+                                    };
+                                    @emoji
+                                }
+                            </div>
+                            <div class="product-name">@p.Name</div>
+                            <div class="product-price">Rs @p.Price.ToString("N2")</div>
+                             @if (p.Stock <= 0)
+                             {
+                                 <div class="stock-badge" style="color:var(--danger);">Deactivated</div>
+                             }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- CART PANEL -->
+        <div class="cart-panel">
+            <div class="cart-header">
+                <div>
+                    <div style="font-size:16px;font-weight:700;">Order Cart</div>
+                    <div id="cartCount" style="font-size:12px;color:var(--text-muted);">0 items</div>
+                </div>
+                <button class="btn-pos btn-danger-pos" onclick="clearCart()" style="padding:6px 12px;font-size:12px;">
+                    <i class="bi bi-trash3"></i> Clear
+                </button>
+            </div>
+
+            <!-- Cart Items -->
+            <div class="cart-items" id="cartItems">
+                <div id="emptyCart" style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="bi bi-cart3" style="font-size:40px;display:block;margin-bottom:12px;opacity:0.3;"></i>
+                    <div>Cart is empty</div>
+                    <div style="font-size:12px;margin-top:6px;">Click products to add them</div>
+                </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="cart-footer" style="flex-shrink:0;">
+                <div class="cart-totals">
+                    <div class="total-row grand">
+                        <span>TOTAL</span>
+                        <span id="totGrand">Rs 0.00</span>
+                    </div>
+                </div>
+
+                <!-- Process Button -->
+                <button class="btn-pos btn-primary-pos w-100 mt-3" onclick="processPayment()" id="checkoutBtn" style="justify-content:center;font-size:16px;padding:14px;">
+                    <i class="bi bi-check-circle-fill"></i> Process Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.IsSubscriptionExpired == true)
+    {
+        <!-- ═══ PERSISTENT FOOTER WARNING ═══ -->
+        <div class="pos-footer-warning" style="background: linear-gradient(90deg, #991b1b, #dc2626); color: #ffffff; height: 38px; padding: 0 16px; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; flex-shrink: 0; z-index: 100; border-top: 1px solid rgba(255,255,255,0.2); box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+            <i class="bi bi-exclamation-triangle-fill text-warning fs-6"></i>
+            <span>⚠️ Subscription Expired: Please pay your outstanding bills to avoid service interruption.</span>
+        </div>
+    }
+</div>
+
+<!-- ══════════════ SUCCESS MODAL ══════════════ -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+            <div class="modal-body text-center" style="padding:36px;">
+                <div style="font-size:60px;margin-bottom:12px;">✅</div>
+                <div style="font-size:22px;font-weight:800;color:var(--success);margin-bottom:8px;">Payment Complete!</div>
+                <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;" id="successInvoice"></div>
+                <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                    <a id="cashierReceiptLink" class="btn-pos btn-primary-pos" target="_blank">
+                        <i class="bi bi-receipt"></i> Cashier Receipt
+                    </a>
+                    <a id="kitchenReceiptLink" class="btn-pos btn-warning-pos" target="_blank">
+                        <i class="bi bi-printer"></i> Kitchen Receipt
+                    </a>
+                </div>
+                <button class="btn-pos btn-ghost w-100 mt-3" onclick="newOrder()">
+                    <i class="bi bi-plus-circle me-2"></i>New Order
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (ViewBag.IsSubscriptionExpired == true)
+{
+    <!-- ══════════════ OUTSTANDING BILLS WARNING MODAL ══════════════ -->
+    <div class="modal fade" id="outstandingBillsModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
+            <div class="modal-content" style="background:var(--bg-card);border:2px solid #ef4444;border-radius:var(--radius);box-shadow: 0 10px 30px rgba(239,68,68,0.35);">
+                <div class="modal-body text-center p-4">
+                    <div class="d-inline-flex p-3 rounded-circle mb-3" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 40px;"></i>
+                    </div>
+                    <h4 class="fw-bold text-danger mb-2" style="letter-spacing: -0.3px;">Please Pay Your Outstanding Bills</h4>
+                    <p class="text-white fw-semibold mb-2" style="font-size: 14.5px;">
+                        Your subscription expired on @(((DateTime?)ViewBag.SubscriptionEndDate)?.ToString("dd MMMM yyyy") ?? "recently").
+                    </p>
+                    <p style="color:var(--text-muted);font-size:13px;line-height:1.6;" class="mb-4">
+                        Please pay your outstanding bills immediately to avoid interruption to your restaurant services. 
+                        You can continue using all features of the Point of Sale system for now.
+                    </p>
+                    <button type="button" class="btn-pos btn-accent w-100 py-2 fw-bold" onclick="dismissBillsModal()">
+                        <i class="bi bi-check2-circle me-1"></i> I Understand &amp; Continue to POS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ══════════════ HELD ORDERS MODAL ══════════════ -->
+<div class="modal fade" id="heldOrdersModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);">
+            <div class="modal-header" style="border-color:var(--border);">
+                <h5 class="modal-title" style="color:var(--text-primary);"><i class="bi bi-clock-history me-2"></i>Held Orders</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                @if (!Model.HeldOrders.Any())
+                {
+                    <p style="text-align:center;color:var(--text-muted);">No held orders</p>
+                }
+                @foreach (var h in Model.HeldOrders)
+                {
+                    <div class="pos-card d-flex justify-between align-center" style="padding:12px 16px;margin-bottom:8px;border:1px solid var(--border);">
+                        <div>
+                            <div style="font-weight:600;">@h.HoldReference</div>
+                            <div style="font-size:12px;color:var(--text-muted);">@h.CustomerName @h.TableNumber @h.CreatedAt.ToString("hh:mm tt")</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn-pos btn-success-pos" onclick="resumeOrder(@h.Id)" style="padding:6px 12px;font-size:12px;">
+                                <i class="bi bi-play-fill"></i> Resume
+                            </button>
+                            <button class="btn-pos btn-danger-pos" onclick="deleteHeldOrder(@h.Id, this)" style="padding:6px 12px;font-size:12px;">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+const CSRF_TOKEN = '@token';
+let cart = [];
+
+// ─── Cart Engine ─────────────────────────────────────────────────────────────
+function addToCart(el) {
+    if (el.classList.contains('out-of-stock')) { showToast('Item deactivated', 'warning'); return; }
+    const isDeal = el.dataset.isDeal === 'true';
+    const id = isDeal ? el.dataset.id : +el.dataset.id;
+    const existing = cart.find(x => isDeal ? (x.dealId === id) : (x.productId === id));
+    if (existing) { 
+        existing.quantity++; 
+    }
+    else {
+        if (isDeal) {
+            cart.push({ dealId: id, productId: null, productName: el.dataset.name, unitPrice: +el.dataset.price, quantity: 1, discountPercent: 0, discountAmount: 0, lineTotal: 0, modifiers: '' });
+        } else {
+            cart.push({ productId: id, dealId: null, productName: el.dataset.name, unitPrice: +el.dataset.price, quantity: 1, discountPercent: 0, discountAmount: 0, lineTotal: 0, modifiers: '' });
+        }
+    }
+    renderCart();
+    el.style.transform = 'scale(0.95)';
+    setTimeout(() => el.style.transform = '', 150);
+}
+
+function updateQty(id, delta) {
+    const item = cart.find(x => x.productId === id || x.dealId === id);
+    if (!item) return;
+    item.quantity += delta;
+    if (item.quantity <= 0) cart = cart.filter(x => x.productId !== id && x.dealId !== id);
+    renderCart();
+}
+
+function removeItem(id) { cart = cart.filter(x => x.productId !== id && x.dealId !== id); renderCart(); }
+
+function clearCart() { cart = []; renderCart(); }
+
+function renderCart() {
+    const container = document.getElementById('cartItems');
+    document.getElementById('cartCount').textContent = cart.reduce((s, x) => s + x.quantity, 0) + ' items';
+
+    if (!cart.length) { 
+        container.innerHTML = `<div id="emptyCart" style="text-align:center;padding:40px;color:var(--text-muted);">
+            <i class="bi bi-cart3" style="font-size:40px;display:block;margin-bottom:12px;opacity:0.3;"></i>
+            <div>Cart is empty</div>
+            <div style="font-size:12px;margin-top:6px;">Click products to add them</div>
+        </div>`;
+        renderTotals(); 
+        return; 
+    }
+
+    container.innerHTML = cart.map(item => {
+        const lineTotal = item.unitPrice * item.quantity;
+        item.lineTotal = lineTotal;
+        const itemId = item.dealId ? `'${item.dealId}'` : item.productId;
+        return `<div class="cart-item" data-id="${item.dealId || item.productId}">
+            <div class="cart-item-name">
+                <div>${item.productName}</div>
+                ${item.modifiers ? `<div style="font-size:11px;color:var(--text-muted);">${item.modifiers}</div>` : ''}
+            </div>
+            <div class="cart-item-controls">
+                <button class="cart-qty-btn" onclick="updateQty(${itemId},-1)"><i class="bi bi-dash"></i></button>
+                <span class="cart-qty">${item.quantity}</span>
+                <button class="cart-qty-btn" onclick="updateQty(${itemId},1)"><i class="bi bi-plus"></i></button>
+            </div>
+            <div class="cart-item-price">Rs ${lineTotal.toFixed(2)}</div>
+            <i class="bi bi-x-circle cart-item-remove" onclick="removeItem(${itemId})"></i>
+        </div>`;
+    }).join('');
+
+    renderTotals();
+}
+
+function renderTotals() {
+    const subtotal = cart.reduce((s, x) => s + x.lineTotal, 0);
+    const grand = subtotal;
+
+    document.getElementById('totGrand').textContent = 'Rs ' + grand.toFixed(2);
+}
+
+// ─── Category Filter ──────────────────────────────────────────────────────────
+document.querySelectorAll('.category-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+        document.querySelectorAll('.category-pill').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        const cat = this.dataset.cat;
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
+        });
+    });
+});
+
+window.addEventListener('load', () => {
+    const defaultPill = document.querySelector('.category-pill[data-cat="Deals"]') || document.querySelector('.category-pill[data-cat="all"]');
+    if (defaultPill) defaultPill.click();
+});
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimer);
+    const q = this.value.trim();
+    if (!q) { document.querySelectorAll('.product-card').forEach(c => c.style.display = ''); return; }
+    searchTimer = setTimeout(async () => {
+        const res = await fetch('/POS/SearchProducts?term=' + encodeURIComponent(q));
+        const results = await res.json();
+        const ids = results.map(r => r.id);
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.style.display = ids.includes(+card.dataset.id) ? '' : 'none';
+        });
+    }, 300);
+});
+
+// ─── Barcode Scanner (rapid keypress) ────────────────────────────────────────
+let barcodeBuffer = '', barcodeTimer;
+document.addEventListener('keypress', function(e) {
+    if (document.activeElement === document.getElementById('searchInput')) return;
+    barcodeBuffer += e.key;
+    clearTimeout(barcodeTimer);
+    barcodeTimer = setTimeout(async () => {
+        if (barcodeBuffer.length >= 4) {
+            const res = await fetch('/POS/GetByBarcode?barcode=' + encodeURIComponent(barcodeBuffer));
+            if (res.ok) {
+                const p = await res.json();
+                const el = document.querySelector(`.product-card[data-id="${p.id}"]`);
+                if (el) addToCart(el);
+                else showToast('Product found but not in grid. Refresh.', 'info');
+            }
+        }
+        barcodeBuffer = '';
+    }, 100);
+});
+
+// ─── Order Type Toggle ────────────────────────────────────────────────────────
+document.getElementById('orderType').addEventListener('change', function() {
+    document.getElementById('tableNumber').style.display = this.value === '0' ? '' : 'none';
+});
+
+// Payment method toggle cash section removed
+
+// ─── Checkout Flow ────────────────────────────────────────────────────────────
+async function processPayment() {
+    if (!cart.length) { showToast('Cart is empty', 'warning'); return; }
+
+    const btn = document.getElementById('checkoutBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+
+    const grand = parseFloat(document.getElementById('totGrand').textContent.replace('Rs ',''));
+
+    const payload = {
+        items: cart,
+        customerId: document.getElementById('customerId').value || null,
+        orderType: +document.getElementById('orderType').value,
+        paymentMethod: 0, // Default to cash for simplified flow
+        tableNumber: document.getElementById('tableNumber').value,
+        discountPercent: 0,
+        discountAmount: 0,
+        serviceCharge: 0,
+        amountPaid: grand,
+        notes: ''
+    };
+
+    try {
+        const res = await fetch('/POS/Checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) { showToast(data.error || 'Checkout failed', 'error'); return; }
+
+        // ── Silent auto-print: BOTH Cashier & Kitchen Receipts ──
+        silentPrintHtml('/POS/PrintCashierReceipt?saleId=' + data.saleId, 400);
+        setTimeout(() => {
+            silentPrintHtml('/POS/PrintKitchenReceipt?saleId=' + data.saleId, 400);
+        }, 1200);
+
+        showToast('Payment processed! Printing cashier & kitchen receipts...', 'success');
+        clearCart();
+    } catch(e) {
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle-fill"></i> Process Payment';
+    }
+}
+
+// ─── Silent Print Helper ──────────────────────────────────────────────────────
+// Loads the HTML receipt into a hidden iframe, then calls iframe.contentWindow.print().
+// This prints ONLY the receipt content (not the full POS page).
+// With Chrome --kiosk-printing flag, this prints with zero dialog to default printer.
+function silentPrintHtml(url, delay = 300) {
+    if (window.chrome && window.chrome.webview) {
+        // Send directly to Desktop host for native zero-dialog thermal printing
+        window.chrome.webview.postMessage(JSON.stringify({ action: 'print', url: url }));
+        return;
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:0;left:0;width:302px;height:1px;border:none;opacity:0;pointer-events:none;z-index:-9999;';
+    document.body.appendChild(iframe);
+
+    iframe.onload = function() {
+        try {
+            setTimeout(() => {
+                iframe.contentWindow.print();
+            }, delay);
+        } catch(e) {
+            console.warn('Receipt print error:', e);
+        }
+        setTimeout(() => {
+            if (document.body.contains(iframe)) document.body.removeChild(iframe);
+        }, 30000);
+    };
+
+    iframe.src = url;
+}
+
+function newOrder() {
+    bootstrap.Modal.getInstance(document.getElementById('successModal'))?.hide();
+    clearCart();
+}
+
+// ─── Hold Order ───────────────────────────────────────────────────────────────
+async function holdOrder() {
+    if (!cart.length) { showToast('Cart is empty', 'warning'); return; }
+    const payload = {
+        items: cart,
+        tableNumber: document.getElementById('tableNumber').value,
+        customerName: document.getElementById('customerId').selectedOptions[0]?.text
+    };
+    const res = await fetch('/POS/HoldOrder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+        body: JSON.stringify(payload)
+    });
+    if (res.ok) { 
+        clearCart(); 
+        showToast('Order held! Refreshing...', 'success');
+        setTimeout(() => window.location.reload(), 800);
+    }
+}
+
+// ─── Resume Order ─────────────────────────────────────────────────────────────
+async function resumeOrder(id) {
+    const res = await fetch('/POS/ResumeOrder/' + id);
+    if (!res.ok) { showToast('Failed to resume order', 'error'); return; }
+    const data = await res.json();
+    cart = JSON.parse(data.cartJson);
+    
+    // Safety check for case-sensitivity issues from old orders
+    cart.forEach(item => {
+        if (!item.productId && item.ProductId) item.productId = item.ProductId;
+        if (!item.productName && item.ProductName) item.productName = item.ProductName;
+        if (!item.unitPrice && item.UnitPrice) item.unitPrice = item.UnitPrice;
+        if (!item.quantity && item.Quantity) item.quantity = item.Quantity;
+    });
+
+    if (data.table) document.getElementById('tableNumber').value = data.table;
+    renderCart();
+    
+    bootstrap.Modal.getInstance(document.getElementById('heldOrdersModal'))?.hide();
+    
+    // Delete the row from the modal UI instantly so it doesn't look like it's still there
+    const row = document.querySelector(`button[onclick="resumeOrder(${id})"]`)?.closest('.pos-card');
+    if (row) row.remove();
+    
+    showToast('Order resumed!', 'success');
+}
+
+// ─── Delete Held Order ────────────────────────────────────────────────────────
+async function deleteHeldOrder(id, btn) {
+    if (!confirm('Are you sure you want to delete this held order?')) return;
+    const res = await fetch('/POS/DeleteHeldOrder/' + id, {
+        method: 'DELETE',
+        headers: { 'X-CSRF-TOKEN': CSRF_TOKEN }
+    });
+    if (res.ok) {
+        const row = btn.closest('.pos-card');
+        if (row) row.remove();
+        showToast('Held order deleted', 'success');
+    } else {
+        showToast('Failed to delete', 'error');
+    }
+}
+
+// ─── Theme ────────────────────────────────────────────────────────────────────
+function toggleTheme() {
+    const curr = document.documentElement.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('pos-theme', next);
+    document.getElementById('themeIcon').className = next === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+}
+(function() {
+    const t = localStorage.getItem('pos-theme') || 'dark';
+    document.getElementById('themeIcon').className = t === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+})();
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+    const icons = { success: 'bi-check-circle-fill', error: 'bi-x-circle-fill', warning: 'bi-exclamation-triangle-fill', info: 'bi-info-circle-fill' };
+    const colors = { success: 'var(--success)', error: 'var(--danger)', warning: 'var(--warning)', info: 'var(--info)' };
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className = 'pos-toast';
+    t.innerHTML = `<i class="bi ${icons[type]}" style="color:${colors[type]};font-size:18px;"></i><span style="font-size:14px;flex:1;">${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+// ─── SignalR: Kitchen Response ────────────────────────────────────────────────
+const connection = new signalR.HubConnectionBuilder().withUrl('/hubs/kitchen?role=pos').withAutomaticReconnect().build();
+connection.on('ItemReady', (invoice, item) => showToast(`✅ ${item} ready on order ${invoice}`, 'success'));
+connection.on('OrderComplete', invoice => showToast(`🎉 Order ${invoice} fully ready!`, 'success'));
+connection.start().catch(e => console.log('SignalR:', e));
+
+
+
+@if (ViewBag.IsSubscriptionExpired == true)
+{
+    <text>
+    function dismissBillsModal() {
+        sessionStorage.setItem('billsModalAcknowledged', 'true');
+        var billsModalElem = document.getElementById('outstandingBillsModal');
+        if (billsModalElem) {
+            var m = bootstrap.Modal.getInstance(billsModalElem);
+            if (m) m.hide();
+        }
+        setTimeout(function() {
+            document.querySelectorAll('.modal-backdrop').forEach(function(b) { b.remove(); });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }, 100);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (sessionStorage.getItem('billsModalAcknowledged') !== 'true') {
+            var billsModalElem = document.getElementById('outstandingBillsModal');
+            if (billsModalElem) {
+                var billsModal = new bootstrap.Modal(billsModalElem);
+                billsModal.show();
+            }
+        }
+    });
+    </text>
+}
+</script>
+</body>
+</html>

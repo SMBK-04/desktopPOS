@@ -1,0 +1,248 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kitchen Display — Enterprise POS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0a0a; color: #fff; font-family: Inter, sans-serif; min-height: 100vh; }
+
+        .kds-header {
+            background: #111; border-bottom: 2px solid #222;
+            padding: 16px 24px; display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .kds-title { font-size: 20px; font-weight: 800; color: #f59e0b; }
+        .kds-status { font-size: 13px; color: #666; display: flex; align-items: center; gap: 8px; }
+        .kds-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+        @@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .kds-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 20px;
+            min-height: calc(100vh - 68px);
+            align-content: start;
+        }
+
+        .ticket {
+            background: #1a1a1a; border: 2px solid #333;
+            border-radius: 12px; padding: 16px;
+            animation: ticketIn 0.4s ease;
+            transition: border-color 0.3s ease;
+        }
+        .ticket.urgent { border-color: #ef4444; }
+        .ticket.warn { border-color: #f59e0b; }
+        .ticket.ready { border-color: #10b981; opacity: 0.6; }
+
+        @@keyframes ticketIn { from { opacity:0; transform:scale(.9) translateY(-12px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+        .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .ticket-order { font-size: 18px; font-weight: 900; color: #f59e0b; }
+        .ticket-type { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 700; }
+        .ticket-type.dine  { background: rgba(99,102,241,.2); color: #818cf8; }
+        .ticket-type.take  { background: rgba(16,185,129,.2); color: #34d399; }
+        .ticket-type.del   { background: rgba(245,158,11,.2); color: #fbbf24; }
+
+        .ticket-meta { font-size: 11px; color: #555; margin-bottom: 12px; }
+        .ticket-timer { font-size: 12px; color: #666; font-weight: 600; }
+        .ticket-timer.warn { color: #f59e0b; }
+        .ticket-timer.alert { color: #ef4444; animation: blink .8s steps(1) infinite; }
+        @@keyframes blink { 50% { opacity: 0; } }
+
+        .ticket-divider { border: none; border-top: 1px solid #333; margin: 12px 0; }
+
+        .ticket-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid #222; }
+        .ticket-item:last-child { border-bottom: none; }
+        .ticket-qty { font-size: 22px; font-weight: 900; color: #f59e0b; min-width: 36px; text-align: center; }
+        .ticket-name { flex: 1; }
+        .ticket-name strong { font-size: 15px; font-weight: 700; display: block; }
+        .ticket-name small { font-size: 11px; color: #555; }
+
+        .ticket-note { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 6px; padding: 8px; font-size: 12px; color: #fca5a5; margin-top: 10px; }
+
+        .ticket-actions { display: flex; gap: 8px; margin-top: 14px; }
+        .btn-kds {
+            flex: 1; padding: 10px; border: none; border-radius: 8px;
+            font-weight: 700; font-size: 13px; cursor: pointer; font-family: Inter, sans-serif;
+            transition: all 0.2s ease;
+        }
+        .btn-kds:hover { transform: translateY(-1px); }
+        .btn-ready { background: #10b981; color: white; }
+        .btn-done  { background: #6366f1; color: white; }
+
+        .kds-empty {
+            position: fixed; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: #333;
+        }
+        .kds-empty i { font-size: 80px; display: block; margin-bottom: 20px; }
+        .kds-empty div { font-size: 18px; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="kds-header">
+    <div class="kds-title">🍳 Kitchen Display System</div>
+    <div class="kds-status">
+        <div class="kds-dot" id="connDot"></div>
+        <span id="connStatus">Connecting...</span>
+        <span style="color:#444;">|</span>
+        <span id="orderCount">0 active orders</span>
+        <span style="color:#444;">|</span>
+        <span id="clockEl"></span>
+    </div>
+</div>
+
+<div class="kds-board" id="kdsBoard">
+    <div class="kds-empty" id="emptyState">
+        <i class="bi bi-egg-fried"></i>
+        <div>No Active Orders</div>
+        <div style="font-size:14px;margin-top:8px;color:#444;">Orders will appear here in real-time</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+let orders = {};
+
+// ─── Clock ────────────────────────────────────────────────────────────────────
+function updateClock() {
+    document.getElementById('clockEl').textContent = new Date().toLocaleTimeString();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─── Render Board ─────────────────────────────────────────────────────────────
+function renderBoard() {
+    const board = document.getElementById('kdsBoard');
+    const keys = Object.keys(orders);
+    document.getElementById('orderCount').textContent = keys.length + ' active order' + (keys.length !== 1 ? 's' : '');
+    document.getElementById('emptyState').style.display = keys.length ? 'none' : '';
+
+    keys.forEach(inv => {
+        const order = orders[inv];
+        if (!document.getElementById('ticket-' + inv)) {
+            const ticket = document.createElement('div');
+            ticket.id = 'ticket-' + inv;
+            ticket.className = 'ticket';
+            board.appendChild(ticket);
+        }
+        updateTicket(inv, order);
+    });
+}
+
+function updateTicket(inv, order) {
+    const el = document.getElementById('ticket-' + inv);
+    if (!el) return;
+
+    const ageMs = Date.now() - new Date(order.createdAt).getTime();
+    const ageMins = Math.floor(ageMs / 60000);
+    const timerClass = ageMins >= 15 ? 'alert' : ageMins >= 8 ? 'warn' : '';
+    const ticketClass = ageMins >= 15 ? 'urgent' : ageMins >= 8 ? 'warn' : '';
+
+    el.className = `ticket ${ticketClass}`;
+
+    const typeLabel = order.orderType === 'DineIn' ? '<span class="ticket-type dine">DINE-IN</span>' :
+                      order.orderType === 'Takeaway' ? '<span class="ticket-type take">TAKEAWAY</span>' :
+                      '<span class="ticket-type del">DELIVERY</span>';
+
+    const items = order.items.map(item => `
+        <div class="ticket-item">
+            <div class="ticket-qty">${item.quantity}</div>
+            <div class="ticket-name">
+                <strong>${item.name}</strong>
+                ${item.modifiers ? `<small>${item.modifiers}</small>` : ''}
+            </div>
+        </div>
+    `).join('');
+
+    el.innerHTML = `
+        <div class="ticket-header">
+            <div>
+                <div class="ticket-order">${inv}</div>
+                ${order.tableNumber ? `<div class="ticket-meta">Table: <strong style="color:#fff;">${order.tableNumber}</strong></div>` : ''}
+                ${order.orderToken ? `<div class="ticket-meta">Token: <strong style="color:#f59e0b;">#${order.orderToken}</strong></div>` : ''}
+            </div>
+            <div style="text-align:right;">
+                ${typeLabel}
+                <div class="ticket-timer ${timerClass}" style="margin-top:4px;">${ageMins}m</div>
+            </div>
+        </div>
+        <hr class="ticket-divider" />
+        ${items}
+        ${order.notes ? `<div class="ticket-note"><i class="bi bi-exclamation-circle me-1"></i>${order.notes}</div>` : ''}
+        <div class="ticket-actions">
+            <button class="btn-kds btn-ready" onclick="markReady('${inv}')">✅ Mark Ready</button>
+            <button class="btn-kds btn-done" onclick="orderDone('${inv}')">🎯 Done / Clear</button>
+        </div>
+    `;
+}
+
+// Update timers every minute
+setInterval(() => Object.keys(orders).forEach(inv => updateTicket(inv, orders[inv])), 60000);
+
+async function markReady(inv) {
+    await connection.invoke('MarkItemReady', inv, 'All items');
+    document.getElementById('ticket-' + inv)?.classList.add('ready');
+}
+
+async function orderDone(inv) {
+    await connection.invoke('OrderComplete', inv);
+    delete orders[inv];
+    document.getElementById('ticket-' + inv)?.remove();
+    renderBoard();
+}
+
+// ─── SignalR Connection ────────────────────────────────────────────────────────
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl('/hubs/kitchen?role=kitchen')
+    .withAutomaticReconnect()
+    .build();
+
+connection.on('ReceiveOrder', (order) => {
+    orders[order.invoiceNumber] = { ...order, createdAt: order.createdAt || new Date().toISOString() };
+    renderBoard();
+    // Flash notification
+    if (Notification.permission === 'granted') {
+        new Notification(`New Order: ${order.invoiceNumber}`, { body: `${order.items.length} items — ${order.orderType}` });
+    }
+});
+
+connection.on('OrderCleared', (inv) => {
+    delete orders[inv];
+    document.getElementById('ticket-' + inv)?.remove();
+    renderBoard();
+});
+
+connection.onreconnecting(() => {
+    document.getElementById('connDot').style.background = '#f59e0b';
+    document.getElementById('connStatus').textContent = 'Reconnecting...';
+});
+
+connection.onreconnected(() => {
+    document.getElementById('connDot').style.background = '#10b981';
+    document.getElementById('connStatus').textContent = 'Connected';
+});
+
+connection.start().then(() => {
+    document.getElementById('connDot').style.background = '#10b981';
+    document.getElementById('connStatus').textContent = 'Connected';
+}).catch(() => {
+    document.getElementById('connDot').style.background = '#ef4444';
+    document.getElementById('connStatus').textContent = 'Offline';
+});
+
+// Request notification permission
+if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+}
+</script>
+</body>
+</html>

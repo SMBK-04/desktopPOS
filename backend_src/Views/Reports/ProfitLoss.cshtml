@@ -1,0 +1,84 @@
+@model EnterprisePOS.Models.ViewModels.ProfitLossViewModel
+@{
+    ViewBag.Title = "Profit & Loss Report";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-graph-up-arrow me-2" style="color:var(--accent);"></i>Profit & Loss</div>
+        <div class="page-subtitle">@Model.From.ToString("dd MMM yyyy") — @Model.To.ToString("dd MMM yyyy")</div>
+    </div>
+    <div class="d-flex gap-8">
+        <a href="/Reports" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        <a href="/Reports/ExportPdf?from=@Model.From.ToString("yyyy-MM-dd")&to=@Model.To.ToString("yyyy-MM-dd")" class="btn-pos btn-primary-pos" target="_blank">
+            <i class="bi bi-file-pdf-fill"></i> Export PDF
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon revenue"><i class="bi bi-currency-dollar"></i></div>
+            <div><div class="kpi-label">Total Revenue</div><div class="kpi-value">Rs @Model.TotalRevenue.ToString("N2")</div></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon expense"><i class="bi bi-box-seam"></i></div>
+            <div><div class="kpi-label">Total COGS</div><div class="kpi-value">Rs @Model.TotalCost.ToString("N2")</div></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon profit"><i class="bi bi-graph-up"></i></div>
+            <div><div class="kpi-label">Gross Profit</div><div class="kpi-value @(Model.GrossProfit >= 0 ? "text-success" : "text-danger")">Rs @Model.GrossProfit.ToString("N2")</div></div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-icon @(Model.NetProfit >= 0 ? "revenue" : "expense")"><i class="bi bi-wallet2"></i></div>
+            <div><div class="kpi-label">Net Profit</div><div class="kpi-value @(Model.NetProfit >= 0 ? "text-success" : "text-danger")">Rs @Model.NetProfit.ToString("N2")</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="pos-card">
+            <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Breakdown</h6>
+            <table class="pos-table">
+                <tbody>
+                    <tr><td style="color:var(--text-muted);">Total Revenue</td><td class="fw-600 text-success" style="text-align:right;">Rs @Model.TotalRevenue.ToString("N2")</td></tr>
+                    <tr><td style="color:var(--text-muted);">Cost of Goods Sold</td><td class="fw-600 text-danger" style="text-align:right;">-Rs @Model.TotalCost.ToString("N2")</td></tr>
+                    <tr style="border-top:2px solid var(--border);"><td style="font-weight:600;">Gross Profit</td><td class="fw-600 @(Model.GrossProfit >= 0 ? "text-success" : "text-danger")" style="text-align:right;">Rs @Model.GrossProfit.ToString("N2")</td></tr>
+                    <tr><td style="color:var(--text-muted);">Operating Expenses</td><td class="fw-600 text-danger" style="text-align:right;">-Rs @Model.TotalExpenses.ToString("N2")</td></tr>
+                    <tr style="border-top:2px solid var(--border);font-size:18px;"><td style="font-weight:800;">Net Profit</td><td class="fw-600 @(Model.NetProfit >= 0 ? "text-success" : "text-danger")" style="text-align:right;">Rs @Model.NetProfit.ToString("N2")</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="pos-card">
+            <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Key Metrics</h6>
+            <div style="display:grid;gap:16px;">
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Total Orders</span>
+                    <span class="fw-600">@Model.TotalOrders</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Avg Order Value</span>
+                    <span class="fw-600">Rs @(Model.TotalOrders > 0 ? (Model.TotalRevenue / Model.TotalOrders).ToString("N2") : "0.00")</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">Profit Margin</span>
+                    <span class="fw-600 @(Model.ProfitMarginPercent >= 0 ? "text-success" : "text-danger")">@Model.ProfitMarginPercent%</span>
+                </div>
+                <div class="d-flex justify-between">
+                    <span style="color:var(--text-muted);">COGS %</span>
+                    <span class="fw-600">@(Model.TotalRevenue > 0 ? Math.Round(Model.TotalCost / Model.TotalRevenue * 100, 2) : 0)%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

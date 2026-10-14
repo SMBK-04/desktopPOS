@@ -1,0 +1,263 @@
+@model EnterprisePOS.Models.ViewModels.DashboardStatsViewModel
+@{
+    ViewBag.Title = "Dashboard";
+    var labelsJson = System.Text.Json.JsonSerializer.Serialize(Model.ChartLabels);
+    var revenueJson = System.Text.Json.JsonSerializer.Serialize(Model.RevenueData);
+    var profitJson = System.Text.Json.JsonSerializer.Serialize(Model.ProfitData);
+    var topNamesJson = System.Text.Json.JsonSerializer.Serialize(Model.TopProducts.Select(p => p.ProductName));
+    var topRevenueJson = System.Text.Json.JsonSerializer.Serialize(Model.TopProducts.Select(p => p.Revenue));
+}
+
+<!-- Shift Controls -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        @if (Model.IsShiftActive)
+        {
+            <div style="font-size:14px;color:var(--text-muted);">
+                <i class="bi bi-clock-history me-1"></i> Shift Started: <span class="fw-600">@Model.ShiftStart?.ToString("hh:mm tt")</span>
+            </div>
+        }
+    </div>
+    <form method="post" action="@(Model.IsShiftActive ? "/Shift/EndDay" : "/Shift/StartDay")" class="m-0">
+        @Html.AntiForgeryToken()
+        @if (Model.IsShiftActive)
+        {
+            <button type="submit" class="btn-pos" style="background:var(--danger);color:white;padding:12px 24px;border:none;border-radius:var(--radius);font-weight:600;display:flex;align-items:center;gap:8px;">
+                <i class="bi bi-stop-circle-fill"></i> End Day
+            </button>
+        }
+        else
+        {
+            <button type="submit" class="btn-pos" style="background:var(--success);color:white;padding:12px 24px;border:none;border-radius:var(--radius);font-weight:600;display:flex;align-items:center;gap:8px;">
+                <i class="bi bi-play-circle-fill"></i> Start Day
+            </button>
+        }
+    </form>
+</div>
+
+
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon revenue"><i class="bi bi-currency-dollar"></i></div>
+        <div>
+            <div class="kpi-label">Today's Revenue</div>
+            <div class="kpi-value">Rs @Model.TodaysRevenue.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon profit"><i class="bi bi-graph-up-arrow"></i></div>
+        <div>
+            <div class="kpi-label">Today's Profit</div>
+            <div class="kpi-value">Rs @Model.TodaysProfit.ToString("N2")</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon orders"><i class="bi bi-bag-check-fill"></i></div>
+        <div>
+            <div class="kpi-label">Today's Orders</div>
+            <div class="kpi-value">@Model.TodaysOrders</div>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon expense"><i class="bi bi-credit-card-fill"></i></div>
+        <div>
+            <div class="kpi-label">Today's Expenses</div>
+            <div class="kpi-value">Rs @Model.TodaysExpenses.ToString("N2")</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="pos-card">
+            <div class="d-flex align-center justify-between mb-3">
+                <div>
+                    <div style="font-size:16px;font-weight:600;">Revenue & Profit (7 Days)</div>
+                    <div style="font-size:13px;color:var(--text-muted);">Daily performance overview</div>
+                </div>
+                <div class="badge-pos badge-accent">This Week</div>
+            </div>
+            <div class="chart-container"><canvas id="revenueChart"></canvas></div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="pos-card h-100">
+            <div style="font-size:16px;font-weight:600;margin-bottom:4px;">Top Products</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">By revenue today</div>
+            <div class="chart-container"><canvas id="topProductsChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- Tables Row -->
+<div class="row g-4">
+    <!-- Recent Sales -->
+    <div class="col-lg-7">
+        <div class="pos-card">
+            <div class="d-flex align-center justify-between mb-3">
+                <div style="font-size:16px;font-weight:600;">Recent Sales</div>
+                <a href="/Sales" class="btn-pos btn-ghost" style="font-size:12px;padding:6px 12px;">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="pos-table">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Amount</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sale in Model.RecentSales)
+                        {
+                            <tr>
+                                <td><span class="text-accent fw-600">#@sale.InvoiceNumber</span></td>
+                                <td>@(sale.Customer?.Name ?? "Walk-In")</td>
+                                <td><span class="fw-600">Rs @sale.TotalAmount.ToString("N2")</span></td>
+                                <td><span class="badge-pos badge-info">@sale.OrderType</span></td>
+                                <td>
+                                    @if (sale.Status == EnterprisePOS.Models.Entities.SaleStatus.Completed)
+                                    { <span class="badge-pos badge-success">Completed</span> }
+                                    else if (sale.Status == EnterprisePOS.Models.Entities.SaleStatus.Refunded)
+                                    { <span class="badge-pos badge-danger">Refunded</span> }
+                                    else
+                                    { <span class="badge-pos badge-warning">@sale.Status</span> }
+                                </td>
+                                <td style="color:var(--text-muted);font-size:12px;">@sale.CreatedAt.ToString("hh:mm tt")</td>
+                            </tr>
+                        }
+                        @if (!Model.RecentSales.Any())
+                        {
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px;">No sales today yet</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <div class="col-lg-5">
+        <div class="pos-card">
+            <div class="d-flex align-center justify-between mb-3">
+                <div style="font-size:16px;font-weight:600;">⚠️ Stock Alerts</div>
+                <a href="/Inventory/LowStock" class="btn-pos btn-warning-pos" style="font-size:12px;padding:6px 12px;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> View All
+                </a>
+            </div>
+            <table class="pos-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Stock</th>
+                        <th>Threshold</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model.LowStockProducts)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-600">@p.Name</div>
+                                <div style="font-size:11px;color:var(--text-muted);">@p.Category.Name</div>
+                            </td>
+                            <td>
+                                @if (p.CurrentStock <= 0)
+                                { <span class="badge-pos badge-danger">Out</span> }
+                                else
+                                { <span class="badge-pos badge-warning">@p.CurrentStock</span> }
+                            </td>
+                            <td style="color:var(--text-muted);">@p.LowStockThreshold</td>
+                            <td>
+                                <a href="/Inventory/Adjust/@p.Id" class="btn-pos btn-ghost" style="font-size:11px;padding:4px 8px;">
+                                    <i class="bi bi-plus-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.LowStockProducts.Any())
+                    {
+                        <tr><td colspan="4" style="text-align:center;color:var(--success);padding:30px;"><i class="bi bi-check-circle me-2"></i>All products are well-stocked!</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+    Chart.defaults.font.family = 'Inter';
+
+    // Revenue & Profit Chart
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(labelsJson),
+            datasets: [
+                {
+                    label: 'Revenue',
+                    data: @Html.Raw(revenueJson),
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.1)',
+                    tension: 0.4, fill: true, pointRadius: 4,
+                    pointBackgroundColor: '#6366f1', borderWidth: 2
+                },
+                {
+                    label: 'Profit',
+                    data: @Html.Raw(profitJson),
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16,185,129,0.07)',
+                    tension: 0.4, fill: true, pointRadius: 4,
+                    pointBackgroundColor: '#10b981', borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                x: { grid: { color: gridColor } },
+                y: { grid: { color: gridColor }, ticks: { callback: v => 'Rs ' + v.toLocaleString() } }
+            }
+        }
+    });
+
+    // Top Products Chart
+    new Chart(document.getElementById('topProductsChart'), {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(topNamesJson),
+            datasets: [{
+                label: 'Revenue',
+                data: @Html.Raw(topRevenueJson),
+                backgroundColor: ['#6366f1','#10b981','#f59e0b','#3b82f6','#ec4899'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: gridColor }, ticks: { callback: v => 'Rs ' + v } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+</script>
+}

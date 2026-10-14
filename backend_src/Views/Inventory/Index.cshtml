@@ -1,0 +1,93 @@
+@model IEnumerable<EnterprisePOS.Models.Entities.InventoryLog>
+@{
+    ViewBag.Title = "Inventory Logs";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-boxes me-2" style="color:var(--accent);"></i>Inventory Movement Log</div>
+        <div class="page-subtitle">Complete audit trail of all stock movements</div>
+    </div>
+    <a href="/Inventory/LowStock" class="btn-pos btn-warning-pos">
+        <i class="bi bi-exclamation-triangle-fill"></i> Low Stock
+    </a>
+</div>
+
+<!-- Filter -->
+<div class="pos-card mb-4">
+    <form method="get" class="d-flex gap-8 align-center">
+        <label class="form-label-pos mb-0">Filter by Product:</label>
+        <select name="productId" class="form-control-pos" style="width:auto;" onchange="this.form.submit()">
+            <option value="">All Products</option>
+            @foreach (var p in (IEnumerable<EnterprisePOS.Models.Entities.Product>)ViewBag.Products)
+            {
+                <option value="@p.Id" selected="@(ViewBag.SelectedProductId?.ToString() == p.Id.ToString())">@p.Name</option>
+            }
+        </select>
+        @if (ViewBag.SelectedProductId != null)
+        {
+            <a href="/Inventory" class="btn-pos btn-ghost">Clear Filter</a>
+        }
+    </form>
+</div>
+
+<!-- Log Table -->
+<div class="pos-card" style="overflow-x:auto;">
+    <table class="pos-table">
+        <thead>
+            <tr>
+                <th>Date & Time</th>
+                <th>Product</th>
+                <th>Movement</th>
+                <th>Before</th>
+                <th>Change</th>
+                <th>After</th>
+                <th>Notes</th>
+                <th>User</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model)
+            {
+                <tr>
+                    <td style="font-size:12px;color:var(--text-muted);">
+                        <div>@log.CreatedAt.ToString("dd MMM yyyy")</div>
+                        <div>@log.CreatedAt.ToString("HH:mm:ss")</div>
+                    </td>
+                    <td>
+                        <div class="fw-600">@log.Product.Name</div>
+                    </td>
+                    <td>
+                        @{
+                            var (badgeClass, icon) = log.MovementType switch {
+                                EnterprisePOS.Models.Entities.InventoryMovementType.Sale       => ("badge-danger",  "bi-cart-dash-fill"),
+                                EnterprisePOS.Models.Entities.InventoryMovementType.Purchase   => ("badge-success", "bi-cart-plus-fill"),
+                                EnterprisePOS.Models.Entities.InventoryMovementType.Return     => ("badge-info",    "bi-arrow-return-left"),
+                                EnterprisePOS.Models.Entities.InventoryMovementType.Adjustment => ("badge-warning", "bi-sliders"),
+                                EnterprisePOS.Models.Entities.InventoryMovementType.Damage     => ("badge-danger",  "bi-exclamation-diamond-fill"),
+                                _ => ("badge-accent", "bi-arrow-left-right")
+                            };
+                        }
+                        <span class="badge-pos @badgeClass">
+                            <i class="bi @icon me-1"></i>@log.MovementType
+                        </span>
+                    </td>
+                    <td style="text-align:center;">@log.QuantityBefore</td>
+                    <td style="text-align:center;">
+                        @if (log.QuantityChanged >= 0)
+                        { <span style="color:var(--success);font-weight:600;">+@log.QuantityChanged</span> }
+                        else
+                        { <span style="color:var(--danger);font-weight:600;">@log.QuantityChanged</span> }
+                    </td>
+                    <td style="text-align:center;font-weight:600;">@log.QuantityAfter</td>
+                    <td style="font-size:12px;color:var(--text-muted);">@(log.Notes ?? "—")</td>
+                    <td style="font-size:12px;color:var(--text-muted);">@(log.User?.FullName ?? "System")</td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No inventory movements found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>

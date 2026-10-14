@@ -1,0 +1,128 @@
+@model EnterprisePOS.Models.ViewModels.ProductCreateViewModel
+@{
+    ViewBag.Title = "Add Product";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-plus-circle-fill me-2" style="color:var(--accent);"></i>Add Product</div>
+        <div class="page-subtitle">Create a new product in your catalog</div>
+    </div>
+    <a asp-action="Index" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="row g-4">
+        <!-- Left Column -->
+        <div class="col-lg-8">
+            <div class="pos-card mb-4">
+                <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;letter-spacing:.05em;">Basic Information</h6>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label-pos">Product Name *</label>
+                        <input asp-for="Name" class="form-control-pos" placeholder="e.g., Espresso Coffee" />
+                        <span asp-validation-for="Name" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-pos">Product Code</label>
+                        <input asp-for="ProductCode" class="form-control-pos" placeholder="P001" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-pos">Barcode</label>
+                        <input asp-for="Barcode" class="form-control-pos" placeholder="1234567890" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label-pos">SKU</label>
+                        <input asp-for="SKU" class="form-control-pos" placeholder="BEV-001" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label-pos">Description</label>
+                        <textarea asp-for="Description" class="form-control-pos" rows="3" placeholder="Optional product description..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pos-card mb-4">
+                <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;letter-spacing:.05em;">Pricing & Tax</h6>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label-pos">Cost Price *</label>
+                        <div style="position:relative;">
+                            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);">Rs </span>
+                            <input asp-for="CostPrice" class="form-control-pos" type="number" step="0.01" min="0" style="padding-left:28px;" />
+                        </div>
+                        <span asp-validation-for="CostPrice" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label-pos">Selling Price *</label>
+                        <div style="position:relative;">
+                            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);">Rs </span>
+                            <input asp-for="SellingPrice" class="form-control-pos" type="number" step="0.01" min="0.01" style="padding-left:28px;" />
+                        </div>
+                        <span asp-validation-for="SellingPrice" class="text-danger" style="font-size:12px;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pos-card">
+                <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;letter-spacing:.05em;">Settings</h6>
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" type="checkbox" checked />
+                    <label asp-for="IsActive" class="form-label-pos mb-0">Active (visible in POS)</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-4">
+            <div class="pos-card mb-4">
+                <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;letter-spacing:.05em;">Classification</h6>
+                <div class="mb-3">
+                    <label class="form-label-pos">Category *</label>
+                    <select asp-for="CategoryId" class="form-control-pos" asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
+                        <option value="">— Select Category —</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger" style="font-size:12px;"></span>
+                </div>
+                <div>
+                    <label class="form-label-pos">Product Type</label>
+                    <select asp-for="ProductType" class="form-control-pos">
+                        <option value="0">Standard Product</option>
+                        <option value="1">Combo Product</option>
+                        <option value="2">Service</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="pos-card mb-4">
+                <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;letter-spacing:.05em;">Product Image</h6>
+                <div id="imagePreview" style="width:100%;height:160px;background:var(--bg-hover);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:2px dashed var(--border);">
+                    <div style="text-align:center;color:var(--text-muted);">
+                        <i class="bi bi-image" style="font-size:32px;display:block;margin-bottom:8px;"></i>
+                        <div style="font-size:12px;">No image</div>
+                    </div>
+                </div>
+                <input type="file" name="ImageFile" id="imageFile" accept="image/*" class="form-control-pos" onchange="previewImage(this)" />
+            </div>
+
+            <button type="submit" class="btn-pos btn-primary-pos w-100" style="justify-content:center;padding:14px;font-size:15px;">
+                <i class="bi bi-check-circle-fill me-2"></i>Create Product
+            </button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+function previewImage(input) {
+    if (input.files?.[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('imagePreview').innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" />`;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+</script>
+}

@@ -1,0 +1,61 @@
+@model IEnumerable<EnterprisePOS.Models.ViewModels.TopProductViewModel>
+@{
+    ViewBag.Title = "Top Products";
+    DateTime from = ViewBag.From;
+    DateTime to = ViewBag.To;
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-trophy-fill me-2" style="color:var(--accent);"></i>Top Products</div>
+        <div class="page-subtitle">@from.ToString("dd MMM yyyy") — @to.ToString("dd MMM yyyy")</div>
+    </div>
+    <div class="d-flex gap-8">
+        <a href="/Reports" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+</div>
+
+<div class="pos-card">
+    <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Top 10 Products by Revenue</h6>
+    
+    @if (!Model.Any())
+    {
+        <div class="text-center" style="padding: 40px; color: var(--text-muted);">
+            <i class="bi bi-basket-fill" style="font-size: 40px; opacity: 0.3; display: block; margin-bottom: 16px;"></i>
+            No sales data found for this period.
+        </div>
+    }
+    else
+    {
+        <table class="pos-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Product Name</th>
+                    <th style="text-align: right;">Quantity Sold</th>
+                    <th style="text-align: right;">Revenue</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int rank = 1;
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @if (rank == 1) { <span class="badge-pos badge-warning">🥇 1st</span> }
+                                else if (rank == 2) { <span class="badge-pos" style="background:#e2e8f0;color:#475569;">🥈 2nd</span> }
+                                else if (rank == 3) { <span class="badge-pos" style="background:#fef08a;color:#854d0e;">🥉 3rd</span> }
+                                else { <span style="color:var(--text-muted);font-weight:600;">#@rank</span> }
+                            </td>
+                            <td class="fw-600">@item.ProductName</td>
+                            <td style="text-align: right;">@item.QuantitySold</td>
+                            <td style="text-align: right;" class="text-success fw-600">Rs @item.Revenue.ToString("N2")</td>
+                        </tr>
+                        rank++;
+                    }
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -1,0 +1,66 @@
+@model IEnumerable<EnterprisePOS.Models.ViewModels.DailySalesViewModel>
+@{
+    ViewBag.Title = "Daily Sales Report";
+    DateTime from = ViewBag.From;
+    DateTime to = ViewBag.To;
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-calendar-range-fill me-2" style="color:var(--accent);"></i>Daily Sales</div>
+        <div class="page-subtitle">@from.ToString("dd MMM yyyy") — @to.ToString("dd MMM yyyy")</div>
+    </div>
+    <div class="d-flex gap-8">
+        <a href="/Reports" class="btn-pos btn-ghost"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+</div>
+
+<div class="pos-card">
+    <h6 style="font-weight:600;margin-bottom:20px;color:var(--text-secondary);text-transform:uppercase;font-size:12px;">Sales Breakdown by Day</h6>
+    
+    @if (!Model.Any())
+    {
+        <div class="text-center" style="padding: 40px; color: var(--text-muted);">
+            <i class="bi bi-calendar-x" style="font-size: 40px; opacity: 0.3; display: block; margin-bottom: 16px;"></i>
+            No sales data found for this period.
+        </div>
+    }
+    else
+    {
+        <table class="pos-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th style="text-align: right;">Orders</th>
+                    <th style="text-align: right;">Revenue</th>
+                    <th style="text-align: right;">Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-600">
+                            <div>@item.Date.ToString("dd MMM yyyy")</div>
+                            <div style="font-size: 11px; color: var(--text-muted); font-weight: normal;">@item.Date.ToString("dddd")</div>
+                        </td>
+                        <td style="text-align: right;">@item.OrderCount</td>
+                        <td style="text-align: right;" class="text-success fw-600">Rs @item.Revenue.ToString("N2")</td>
+                        <td style="text-align: right;" class="fw-600 @(item.Profit >= 0 ? "text-success" : "text-danger")">Rs @item.Profit.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr style="border-top: 2px solid var(--border);">
+                    <td class="fw-bold">Total</td>
+                    <td style="text-align: right;" class="fw-bold">@Model.Sum(x => x.OrderCount)</td>
+                    <td style="text-align: right;" class="text-success fw-bold">Rs @Model.Sum(x => x.Revenue).ToString("N2")</td>
+                    @{
+                        var totalProfit = Model.Sum(x => x.Profit);
+                    }
+                    <td style="text-align: right;" class="fw-bold @(totalProfit >= 0 ? "text-success" : "text-danger")">Rs @totalProfit.ToString("N2")</td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+</div>

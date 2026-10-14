@@ -1,0 +1,85 @@
+@model IEnumerable<EnterprisePOS.Models.Entities.Product>
+@{
+    ViewBag.Title = "Low Stock Alerts";
+}
+
+<div class="page-header">
+    <div>
+        <div class="page-title"><i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--warning);"></i>Low Stock Alerts</div>
+        <div class="page-subtitle">Products below reorder threshold</div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-auto">
+        <div class="kpi-card">
+            <div class="kpi-icon warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <div class="kpi-label">Low Stock Items</div>
+                <div class="kpi-value">@Model.Count(p => p.CurrentStock > 0)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-auto">
+        <div class="kpi-card">
+            <div class="kpi-icon expense"><i class="bi bi-x-circle-fill"></i></div>
+            <div>
+                <div class="kpi-label">Out of Stock</div>
+                <div class="kpi-value">@Model.Count(p => p.CurrentStock <= 0)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pos-card" style="overflow-x:auto;">
+    <table class="pos-table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Threshold</th>
+                <th>Deficit</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model)
+            {
+                var deficit = p.ReorderLevel - p.CurrentStock;
+                <tr>
+                    <td>
+                        <div class="fw-600">@p.Name</div>
+                        <div style="font-size:11px;color:var(--text-muted);">@p.ProductCode</div>
+                    </td>
+                    <td><span class="badge-pos badge-accent">@p.Category.Name</span></td>
+                    <td>
+                        @if (p.CurrentStock <= 0)
+                        { <span class="badge-pos badge-danger">OUT OF STOCK</span> }
+                        else
+                        { <span class="badge-pos badge-warning">@p.CurrentStock units</span> }
+                    </td>
+                    <td style="color:var(--text-muted);">@p.LowStockThreshold units</td>
+                    <td>
+                        @if (deficit > 0)
+                        { <span style="color:var(--danger);font-weight:600;">Need @deficit more</span> }
+                        else
+                        { <span style="color:var(--success);">OK</span> }
+                    </td>
+                    <td>
+                        <a href="/Inventory/Adjust/@p.Id" class="btn-pos btn-primary-pos" style="padding:6px 14px;font-size:12px;">
+                            <i class="bi bi-plus-circle me-1"></i>Add Stock
+                        </a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" style="text-align:center;padding:40px;color:var(--success);">
+                    <i class="bi bi-check-circle-fill" style="font-size:32px;display:block;margin-bottom:12px;"></i>
+                    All products are well-stocked! Great job.
+                </td></tr>
+            }
+        </tbody>
+    </table>
+</div>

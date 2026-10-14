@@ -1,0 +1,3 @@
+DELETE FROM SaleItems;
+DELETE FROM Sales;
+DELETE FROM HeldOrders;
