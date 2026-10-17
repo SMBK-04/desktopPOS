@@ -95,6 +95,9 @@ namespace EnterprisePOS.Desktop
                 return;
             }
 
+            // Clean up any orphaned/stuck backend processes from previous runs that may be blocking the port
+            KillOrphanedBackendProcesses();
+
             // Find backend directory
             string appDir = AppDomain.CurrentDomain.BaseDirectory;
             string backendSubDir = Path.Combine(appDir, "backend");
@@ -141,9 +144,9 @@ namespace EnterprisePOS.Desktop
 
             _serverProcess = Process.Start(psi);
 
-            // Wait until the server responds
+            // Wait until the server responds (up to 45 seconds for first cold-boot / database seeding)
             var stopwatch = Stopwatch.StartNew();
-            while (stopwatch.Elapsed < TimeSpan.FromSeconds(30))
+            while (stopwatch.Elapsed < TimeSpan.FromSeconds(45))
             {
                 if (await IsServerRespondingAsync())
                 {
@@ -153,6 +156,22 @@ namespace EnterprisePOS.Desktop
             }
 
             throw new TimeoutException("Timed out waiting for offline POS server to start.");
+        }
+
+        private static void KillOrphanedBackendProcesses()
+        {
+            try
+            {
+                int currentDesktopPid = Process.GetCurrentProcess().Id;
+                foreach (var p in Process.GetProcessesByName("EnterprisePOS"))
+                {
+                    if (p.Id != currentDesktopPid)
+                    {
+                        try { p.Kill(entireProcessTree: true); } catch { }
+                    }
+                }
+            }
+            catch { }
         }
 
         private static async Task<bool> IsServerRespondingAsync()
